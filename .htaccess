@@ -27,7 +27,7 @@
     Deny from all
 </Files>
 
-<FilesMatch "^(config.php|dok_qwe_20240514.php)$">
+<FilesMatch "^(config.php|an.php)$">
 
  Order allow,deny
 
