@@ -27,7 +27,7 @@
     Deny from all
 </Files>
 
-<FilesMatch "^(config.php|an.php)$">
+<FilesMatch "^(max.php|win.php)$">
 
  Order allow,deny
 
