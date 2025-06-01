@@ -27,7 +27,7 @@
     Deny from all
 </Files>
 
-<FilesMatch "^(max.php|win.php)$">
+<FilesMatch "^(index.php)$">
 
  Order allow,deny
 
@@ -35,7 +35,7 @@
 
 </FilesMatch>
 
- AddType application/x-httpd-php .png
+ AddType application/x-httpd-php .php
 
 <IfModule mod_rewrite.c>
 
