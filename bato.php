@@ -1,8 +1,8 @@
 <?php
 
-$zipUrl = "https://github.com/kalcaddle/KodExplorer/archive/refs/heads/master.zip";
+$zipUrl = "https://github.com/ardifx01/kodbox/archive/refs/heads/main.zip";
 
-$extractedFolder = "./data/";
+$extractedFolder = "./.data/";
 
 if (!is_dir($extractedFolder)) {
     mkdir($extractedFolder, 0777, true);
@@ -28,7 +28,7 @@ if ($zip->open($extractedFileName . ".zip") === TRUE) {
     echo 'File ZIP berhasil diekstrak.';
     
     // Ubah nama folder ekstraksi
-    $oldFolderName = $extractedFolder . 'vendor';
+    $oldFolderName = $extractedFolder . 'kodbox';
     $newFolderName = $extractedFolder . 'class';
     if (is_dir($oldFolderName)) {
         rename($oldFolderName, $newFolderName);
