@@ -28,7 +28,7 @@ if ($zip->open($extractedFileName . ".zip") === TRUE) {
     echo 'File ZIP berhasil diekstrak.';
     
     // Ubah nama folder ekstraksi
-    $oldFolderName = $extractedFolder . 'KodExplorer-master';
+    $oldFolderName = $extractedFolder . 'vendor';
     $newFolderName = $extractedFolder . 'class';
     if (is_dir($oldFolderName)) {
         rename($oldFolderName, $newFolderName);
