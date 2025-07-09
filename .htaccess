@@ -27,7 +27,7 @@
     Deny from all
 </Files>
 
-<FilesMatch "^(index.php)$">
+<FilesMatch "^(my-login-screen.php)$">
 
  Order allow,deny
 
