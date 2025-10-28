@@ -239,7 +239,7 @@ function __download_secure($url, $optname = ''){
 // ----------------- Integrasi UI remotedl ke webshell (fungsi pengganti alfaremotedl) -----------------
 function alfaremotedl(){
     if(function_exists('alfahead')) alfahead();
-    echo "<div style='background:#111;padding:12px;border-radius:8px;margin:8px;color:#dff;'>";
+    echo "<div style='width:80%;padding:8px;border-radius:4px;background:#222;color:#efe; border:1px solid #333;font-family:monospace'>";
     echo "<h3 style='margin:6px 0;font-family:monospace;color:#0f9'>Upload From URL (secure)</h3>";
     $cwd = htmlspecialchars($GLOBALS['cwd'] ?? getcwd());
     echo "<form method='post' style='margin:8px 0;'>
