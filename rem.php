@@ -180,10 +180,17 @@ function __download_log($entry){
 
 function __download_secure($url, $optname = ''){
     global $REMOTE_DL_WHITELIST;
-    $base = REMOTE_DL_BASEDIR;
+
+    // Ambil direktori aktif dari global shell
+    $base = isset($GLOBALS['cwd']) && is_dir($GLOBALS['cwd'])
+        ? $GLOBALS['cwd']
+        : (isset($GLOBALS['lokasi']) && is_dir($GLOBALS['lokasi'])
+            ? $GLOBALS['lokasi']
+            : getcwd());
+
     if (!is_dir($base)) {
-        if (!@mkdir($base, 0755, true)) {
-            return ['ok'=>false,'err'=>'Failed to create base dir','path'=>null];
+        return ['ok'=>false,'err'=>'Invalid working directory','path'=>null];
+
         }
     }
     if (!filter_var($url, FILTER_VALIDATE_URL)) {
