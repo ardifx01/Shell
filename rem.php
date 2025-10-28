@@ -13,30 +13,49 @@ body {
 a { color: #00eaff; text-decoration: none; }
 a:hover { color: #b66bff; }
 
+/* Ganti seluruh blok table row style dengan ini */
 table {
   width: 95%;
   border-collapse: collapse;
   margin: 20px auto;
-  background: rgba(15, 10, 35, 0.9);
-  border: 1px solid rgba(105, 90, 255, 0.3);
+  background: rgba(10, 8, 20, 0.9);
+  border: 1px solid rgba(120, 90, 255, 0.4);
   border-radius: 6px;
-  box-shadow: 0 0 15px rgba(100, 60, 255, 0.3);
+  box-shadow: 0 0 15px rgba(130, 50, 255, 0.3);
 }
+
 th {
-  background: linear-gradient(90deg,#240046,#0b0020);
+  background: linear-gradient(90deg,#17003a,#0a001e);
   color: #bdfdff;
   padding: 10px;
   text-align: left;
-  font-size: 14px;
+  font-size: 13px;
   text-transform: uppercase;
+  border-bottom: 1px solid rgba(255,255,255,0.1);
 }
+
 td {
-  padding: 8px 10px;
+  padding: 8px 12px;
+  color: #d8cfff;
   border-top: 1px solid rgba(255,255,255,0.05);
-  color: #e8e3ff;
-  background: rgba(10, 5, 25, 0.4);
+  background: rgba(20, 10, 40, 0.35);
+  transition: background 0.2s ease;
 }
-tr:hover td { background: rgba(130,50,255,0.1); }
+
+/* Hover efek neon */
+tr:hover td {
+  background: rgba(140, 50, 255, 0.25);
+  box-shadow: inset 0 0 6px rgba(150, 80, 255, 0.4);
+}
+
+/* Buat teks permission drwxr lebih kontras */
+td font[color="green"], 
+td font[color="red"], 
+td font {
+  color: #00eaff !important;
+  text-shadow: 0 0 4px #7f3aff;
+  letter-spacing: 1px;
+}
 
 input, select, textarea {
   background: #0b0b18;
