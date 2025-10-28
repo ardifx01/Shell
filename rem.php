@@ -2,29 +2,29 @@
 <html>
 <head>
 <meta charset="utf-8">
-<title>Sh3ll Radical</title>
+<title>Sh3ll Radical Cyber</title>
 <style>
 body {
-  background: linear-gradient(180deg, #020202 0%, #050505 100%);
-  color: #e8ffe8;
+  background: radial-gradient(circle at top, #060312 0%, #030009 100%);
+  color: #d8e2ff;
   font-family: "JetBrains Mono", monospace;
   margin: 0;
 }
-a { color: #00f7ff; text-decoration: none; }
-a:hover { color: #7cffb2; }
+a { color: #00eaff; text-decoration: none; }
+a:hover { color: #b66bff; }
 
 table {
   width: 95%;
   border-collapse: collapse;
   margin: 20px auto;
-  background: rgba(10,10,10,0.9);
-  border: 1px solid rgba(0,255,120,0.15);
+  background: rgba(15, 10, 35, 0.9);
+  border: 1px solid rgba(105, 90, 255, 0.3);
   border-radius: 6px;
-  box-shadow: 0 0 12px rgba(0,255,150,0.2);
+  box-shadow: 0 0 15px rgba(100, 60, 255, 0.3);
 }
 th {
-  background: linear-gradient(90deg,#062,#021);
-  color: #bff;
+  background: linear-gradient(90deg,#240046,#0b0020);
+  color: #bdfdff;
   padding: 10px;
   text-align: left;
   font-size: 14px;
@@ -32,54 +32,63 @@ th {
 }
 td {
   padding: 8px 10px;
-  border-top: 1px solid rgba(255,255,255,0.03);
-  color: #d8ffd8;
-  background: rgba(0,25,15,0.3);
+  border-top: 1px solid rgba(255,255,255,0.05);
+  color: #e8e3ff;
+  background: rgba(10, 5, 25, 0.4);
 }
-tr:hover td { background: rgba(0,255,120,0.05); }
+tr:hover td { background: rgba(130,50,255,0.1); }
 
 input, select, textarea {
-  background: #0b0b0b;
-  color: #9ff;
-  border: 1px solid rgba(0,255,150,0.2);
+  background: #0b0b18;
+  color: #bfefff;
+  border: 1px solid rgba(160,90,255,0.3);
   border-radius: 4px;
   padding: 6px 8px;
 }
 input[type=submit], .up, .gas {
-  background: linear-gradient(180deg,#033,#011);
-  color: #9ff;
-  border: 1px solid #0a6;
+  background: linear-gradient(180deg,#140033,#09001a);
+  color: #cce8ff;
+  border: 1px solid #6c3aff;
   border-radius: 5px;
   padding: 6px 10px;
   cursor: pointer;
+  text-shadow: 0 0 5px #6c3aff;
+  transition: all .2s ease;
 }
 input[type=submit]:hover, .up:hover, .gas:hover {
-  background: linear-gradient(180deg,#044,#022);
+  background: linear-gradient(180deg,#2a0080,#0b0033);
   color: #fff;
+  box-shadow: 0 0 8px #7f3aff;
 }
 form {
   margin: 10px auto;
-  background: rgba(0,15,15,0.4);
+  background: rgba(25, 10, 45, 0.5);
   padding: 10px;
   border-radius: 6px;
   width: fit-content;
 }
 ul { list-style:none; padding:0; margin:10px; text-align:center; }
-ul a { color:#7cffb2; }
+ul a { color:#b66bff; }
 
 pre {
-  background: #040808;
-  color: #9effcc;
+  background: #0a0616;
+  color: #b5caff;
   padding: 10px;
   border-radius: 6px;
   overflow: auto;
+  box-shadow: inset 0 0 10px rgba(150, 80, 255, 0.3);
 }
 .center { text-align:center; }
 .footer {
   text-align:center;
-  color:#789;
+  color:#8f8bbf;
   margin:20px 0;
   font-size:13px;
+}
+h3 {
+  font-weight:600;
+  color:#b6a1ff;
+  text-shadow:0 0 6px #6f40ff;
 }
 </style>
 </head>
