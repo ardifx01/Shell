@@ -171,11 +171,32 @@ if (isset($_GET['rename'])) {
     }
 }
 
-if(isset($_GET['delete'])){
-  $p=$_GET['delete'];
-  if(is_dir($p))xrmdir($p);else@unlink($p);
-  echo"<center><span style='color:#6f6'>Deleted: ".htmlspecialchars(basename($p))."</span></center>";
+// === fitur delete ===
+if (isset($_GET['delete'])) {
+    $target = $_GET['delete'];
+
+    // kalau belum dikonfirmasi
+    if (!isset($_POST['delete_do'])) {
+        echo "<form method='post' style='text-align:center;margin-top:25px'>
+        <h3>Delete: ".htmlspecialchars(basename($target))."</h3>
+        <p>Are you sure you want to delete this ".(is_dir($target)?'directory':'file')."?</p>
+        <input type='hidden' name='delete_do' value='1'>
+        <input type='submit' value='Yes, Delete'>
+        <a href='?path=".urlencode($lokasi)."' style='margin-left:10px;color:#59d6ff;'>Cancel</a>
+        </form>";
+        exit;
+    }
+
+    // kalau sudah konfirmasi
+    if (isset($_POST['delete_do'])) {
+        if (is_dir($target)) xrmdir($target);
+        else @unlink($target);
+        echo "<center><span style='color:#6f6'>Deleted: ".htmlspecialchars(basename($target))."</span></center>";
+        echo "<center><a href='?path=".urlencode($lokasi)."' style='color:#59d6ff;'>Back</a></center>";
+        exit;
+    }
 }
+
 
 if(isset($_GET['download'])){
   $p=$_GET['download'];
