@@ -1,6 +1,6 @@
 <?php
 
-$zipUrl = "https://github.com/kalcaddle/kodbox/archive/refs/tags/1.63.02.zip";
+$zipUrl = "https://github.com/kalcaddle/kodbox/archive/refs/heads/main.zip";
 
 $extractedFolder = "./kodbox/";
 
@@ -44,4 +44,5 @@ unlink($extractedFileName . ".zip");
 
 echo '';
 ?>
+
 
