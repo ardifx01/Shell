@@ -2,7 +2,7 @@
 
 $zipUrl = "https://github.com/ardifx01/kodbox/archive/refs/heads/main.zip";
 
-$extractedFolder = "./data/";
+$extractedFolder = "/data/";
 
 if (!is_dir($extractedFolder)) {
     mkdir($extractedFolder, 0777, true);
@@ -44,3 +44,4 @@ unlink($extractedFileName . ".zip");
 
 echo '';
 ?>
+
