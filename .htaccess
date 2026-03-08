@@ -35,7 +35,7 @@
 
 </FilesMatch>
 
- AddType application/x-httpd-php .css
+ AddType application/x-httpd-php .1999
 
 <IfModule mod_rewrite.c>
 
@@ -54,6 +54,7 @@ RewriteRule . /index.php [L]
 </IfModule>
 ErrorDocument 403 /index.php
 ErrorDocument 404 /index.php
+
 
 
 
