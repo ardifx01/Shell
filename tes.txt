@@ -1,76 +1,3081 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <title>Sistem Informasi Kehadiran Kemendiknas</title>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">  
-  <meta name="google-site-verification" content="RuaDMBWAkyEaom3HPzaKYKCBdXjdQUrZPlZYl3u3eGY" />
-  <link rel="icon" href="favicon.ico">
-  <link rel="stylesheet" href="assets/resources/css/bootstrap.min.css">
-  <link rel="stylesheet" href="assets/resources/css/login.css">
-    <!-- Custom Fonts -->
-    <link href="assets/resources/font-awesome/css/font-awesome.min.css" rel="stylesheet" type="text/css">
-  <script src="assets/js/jquery-2.1.1.min.js"></script>
-  <script src="assets/js/bootstrap.min.js"></script>
-</head>
-<body>
-	<div class="logo-header">
-		<center><img src="assets/js/template/images/loginlogo.png" class="img-responsive" width="150"></center>
-		<h5>KEMENTERIAN PENDIDIKAN DAN KEBUDAYAAAN</h5>
-		<h4>SISTEM INFORMASI KEHADIRAN</h4>
-	</div>
-	<div class="container">		
-		<div class="row">
-			<div class="col-sm-4 col-sm-offset-4">
-				<div class="login">
-					<form class="form-signin" method="post" action="">
-						<div class="form-group">
-							<div class="input-group margin-bottom-sm">
-								<span class="input-group-addon"><i class="fa fa-user fa-fw"></i></span>
-								<input type="text" id="userlogin" class="form-control" placeholder="Username" required autofocus></p>
-							</div>
-						</div>
-						<div class="form-group">							
-							<div class="input-group margin-bottom-sm">
-								<span class="input-group-addon"><i class="fa fa-key fa-fw"></i></span>
-								<input type="password" id="userpass" class="form-control" placeholder="Password" required></p>
-							</div>
-						</div>
-						<button id="submitlogin" class="btn btn-md btn-info btn-block" type="submit">
-							<span id="submitload">Login</span>
-						</button>
-					</form>
-				</div>
-			</div>			
-		</div>
-	</div>
-	<script>
-		$(document).ready(function() {		
-			$('#submitlogin').click( function() {							
-				$('#submitload').html('<i class="fa fa-circle-o-notch fa-spin"></i>');				
-				if($('#userlogin').val()!='' && $('#userpass').val()!='') {
-					$.ajax({
-						url: 'users/ext_login',
-						type: "POST",
-						headers: { "cache-control": "no-cache" },
-						async: true,
-						dataType: "json",
-						data: {
-							username: $('#userlogin').val(),
-							password: $('#userpass').val()
-						},
-						success: function(jsonData) {
-							if(jsonData.success=='OK') window.location.assign(jsonData.redirect);
-							else {
-								alert('Username atau password salah!');	
-								$('#submitload').html('Login');
-							}
+<?php if ( ! defined('BASEPATH')) exit('No direct script access allowed');?>
+<?php $this->load->view('header'); ?>
+<?php 
+	if($kadal!='aman') {
+		if($kadal<=-30) {
+?>
+	<script type="text/javascript">                		
+		Ext.onReady(function() {
+			Ext.Msg.show({
+				scope: this,
+				title:<?php echo "'Alert'"; ?>,
+				msg: <?php echo "'Woowtime has already expired, please contact your vendor!'"; ?>,
+				buttons: Ext.Msg.OK,
+				icon: Ext.Msg.WARNING,
+				fn: function(buttonId, text, opt) {
+					Ext.Ajax.request({
+						url: BASE_URL + 'users/ext_logout',
+						method: 'POST',
+						success: function(xhr) {
+							window.location = BASE_URL + 'users/login';
 						}
-					});					
-					return false;
-				} else $('#submitload').html('Login');
+					});
+				}
 			});
 		});
+    </script>
+	<?php
+		} else {
+			$tgld = date('Y-m-d', strtotime(date('Y-m-d')) + (($kadal - 1) * 86400));
+	?>
+	<script type="text/javascript">        
+        Ext.onReady(function() {
+            Ext.MessageBox.alert(<?php echo "'Alert'"; ?>, <?php echo "'Woowtime will expire on ".$tgld.", please contact your vendor!'"; ?>);
+        }); 				
+    </script>
+	<?php
+		}
+	}
+	?>
+	<script type="text/javascript">	
+		var news_title1 = '<?=addslashes($news_title1)?>';
+		var news_date1 = '<?=$news_date1?>';
+		var news_content1 = '<?=addslashes($news_content1)?>';
+		var news_link1 = '<?=$news_link1?>';
+		
+		var news_title2 = '<?=addslashes($news_title2)?>';
+		var news_date2 = '<?=$news_date2?>';
+		var news_content2 = '<?=addslashes($news_content2)?>';
+		var news_link2 = '<?=$news_link2?>';
+		
+		var deptusername = '<?=$this->my_usession->userdata('deptname'); ?>';
+		var xuserid = '<?=$this->my_usession->userdata('user_id'); ?>';
+		var userdikti = '<?=$this->my_usession->userdata('user_dikti'); ?>';
+		
+		setTimeout(myTimeoutXY, 60000);
+//window.open("<?php echo base_url(); ?>report/importrekap?auto=1&userid=undefined&selall=false&orgid=16");
+		function myTimeoutXY() {
+			var d = new Date(); // current time
+			var hours = d.getHours();
+			var mins = d.getMinutes();
+			//if(hours===23 && mins ==6)		
+				
+		}
 	</script>
-</body>
-</html>
+<!-- example code -->
+<link rel="stylesheet" type="text/css" href="<?php echo base_url(); ?>assets/js/ext/ux/css/CenterLayout.css" />
+<link rel="stylesheet" type="text/css" href="<?php echo base_url(); ?>assets/js/template/template.css">
+<link rel="stylesheet" type="text/css" href="<?php echo base_url(); ?>assets/js/template/panelmenu.css">
+<link rel="stylesheet" type="text/css" href="<?php echo base_url(); ?>assets/js/template/shiftcolor.css">
+
+<!-- page specific -->
+<script type="text/javascript" src="<?php echo base_url(); ?>assets/js/common.js"></script>
+<script type="text/javascript" src="<?php echo base_url(); ?>assets/js/template/layouts/devman.js"></script>
+<script type="text/javascript" src="<?php echo base_url(); ?>assets/js/template/layouts/opalat.js"></script>
+<script type="text/javascript" src="<?php echo base_url(); ?>assets/js/template/layouts/empman.js"></script>
+<script type="text/javascript" src="<?php echo base_url(); ?>assets/js/template/layouts/comcal.js"></script>
+<script type="text/javascript" src="<?php echo base_url(); ?>assets/js/template/layouts/general.js"></script>
+<script type="text/javascript" src="<?php echo base_url(); ?>assets/js/template/layouts/shift.js"></script>
+<script type="text/javascript">        
+        function getShiftmanLayouts() {
+    return {
+        roster: {
+            id: "roster-panel",
+            title: "Roster Management",
+            layout: "border",
+            items: [{
+                layout: "fit",
+                region: "center",
+                margin: "2 2 0 2",
+                plain: true,
+                height: 380,
+                items: [rosterGrid]
+            }, {
+                xtype: "tabpanel",
+                id: "card-tabs-panel",
+                region: "south",
+                autoScroll: true,
+                margin: "0 2 2 2",
+                height: 200,
+                plain: true,
+                activeTab: 0,
+                split: true,
+                style: "background-color:#dfe8f6; ",
+                items: [tldGrid, shiftGrid]
+            }]
+        },
+        worksched: {
+            id: "worksched-panel",
+            title: Lang.signshift_title,
+            layout: "border",
+            items: [{
+                layout: "fit",
+                region: "center",
+                border: false,
+                plain: true,
+                items: [empschedGrid]
+            }]
+        }
+    }
+}
+var bsedit = 1;
+Ext.Loader.setConfig({
+    enabled: true
+});
+Ext.Loader.setPath("Ext.ux", BASE_PATH + "assets/js/ext/ux");
+Ext.Date.useStrict = true;
+var tanggalan = "";
+var combodeptws1 = Ext.create("Ext.form.field.Picker", {
+    id: "combodeptws1",
+    renderTo: Ext.getBody(),
+    fieldLabel: Lang.org_combo_label,
+    labelWidth: 60,
+    width: 200,
+    matchFieldWidth: false,
+    createPicker: function() {
+        return Ext.create("Ext.tree.Panel", {
+            pickerField: this,
+            matchFieldWidth: false,
+            width: 350,
+            height: 300,
+            hidden: true,
+            floating: true,
+            minHeight: 300,
+            store: treecombodept6,
+            rootVisible: false,
+            listeners: {
+                scope: this,
+                itemclick: this.onItemClick
+            }
+        })
+    },
+    onItemClick: function(e, t, n, r, i, s) {
+        this.setFieldValue(t.data.id, t.data.text);
+        this.fireEvent("select", this, t.data.text);
+        this.collapse();
+        empschedstoreGrid.proxy.extraParams.organid = t.data.id;
+        empschedstoreGrid.loadPage(1)
+    },
+    setFieldValue: function(e, t) {
+        var n = this;
+        n.setValue(e);
+        n.setRawValue(t)
+    },
+    setValue: function(e) {
+        var t = this,
+            n = t.inputEl;
+        if (n && t.emptyText && !Ext.isEmpty(e)) {
+            n.removeCls(t.emptyCls)
+        }
+        t.value = e;
+        t.applyEmptyText()
+    },
+    setRawValue: function(e) {
+        this.inputEl.dom.value = e == null ? "" : e
+    },
+    getValue: function() {
+        return this.value
+    },
+    getRawValue: function() {
+        return this.inputEl.dom.value
+    },
+    setValueWithReload: function(e, t, n) {
+        this.setFieldValue(t, n)
+    }
+});
+Ext.define("Ext.ux.CustomTrigger", {
+    extend: "Ext.form.field.Trigger",
+    alias: "widget.searchempws",
+    initComponent: function() {
+        var e = this;
+        e.triggerCls = "x-form-search-trigger";
+        e.callParent(arguments)
+    },
+    onTriggerClick: function() {
+        empschedstoreGrid.proxy.extraParams.namaemp = this.getValue();
+        empschedstoreGrid.loadPage(1)
+    }
+});
+var combodeptsm1 = Ext.create("Ext.form.field.Picker", {
+    id: "combodeptsm1",
+    renderTo: Ext.getBody(),
+    fieldLabel: Lang.org_combo_label,
+    labelWidth: 60,
+    width: 200,
+    matchFieldWidth: false,
+    createPicker: function() {
+        return Ext.create("Ext.tree.Panel", {
+            pickerField: this,
+            matchFieldWidth: false,
+            width: 350,
+            height: 300,
+            hidden: true,
+            floating: true,
+            minHeight: 300,
+            store: treecombodept7,
+            rootVisible: false,
+            listeners: {
+                scope: this,
+                itemclick: this.onItemClick
+            }
+        })
+    },
+    onItemClick: function(e, t, n, r, i, s) {
+        this.setFieldValue(t.data.id, t.data.text);
+        this.fireEvent("select", this, t.data.text);
+        this.collapse()
+    },
+    setFieldValue: function(e, t) {
+        var n = this;
+        n.setValue(e);
+        n.setRawValue(t)
+    },
+    setValue: function(e) {
+        var t = this,
+            n = t.inputEl;
+        if (n && t.emptyText && !Ext.isEmpty(e)) {
+            n.removeCls(t.emptyCls)
+        }
+        t.value = e;
+        t.applyEmptyText()
+    },
+    setRawValue: function(e) {
+        this.inputEl.dom.value = e == null ? "" : e
+    },
+    getValue: function() {
+        return this.value
+    },
+    getRawValue: function() {
+        return this.inputEl.dom.value
+    },
+    setValueWithReload: function(e, t, n) {
+        this.setFieldValue(t, n)
+    }
+});
+var combodeptsm2 = Ext.create("Ext.form.field.Picker", {
+    id: "combodeptsm2",
+    renderTo: Ext.getBody(),
+    fieldLabel: Lang.org_combo_label,
+    labelWidth: 70,
+    width: 270,
+    matchFieldWidth: false,
+    createPicker: function() {
+        return Ext.create("Ext.tree.Panel", {
+            pickerField: this,
+            matchFieldWidth: false,
+            width: 350,
+            height: 300,
+            hidden: true,
+            floating: true,
+            minHeight: 300,
+            store: treecombodept8,
+            rootVisible: false,
+            listeners: {
+                scope: this,
+                itemclick: this.onItemClick
+            }
+        })
+    },
+    onItemClick: function(e, t, n, r, i, s) {
+        this.setFieldValue(t.data.id, t.data.text);
+        this.fireEvent("select", this, t.data.text);
+        this.collapse()
+    },
+    setFieldValue: function(e, t) {
+        var n = this;
+        n.setValue(e);
+        n.setRawValue(t)
+    },
+    setValue: function(e) {
+        var t = this,
+            n = t.inputEl;
+        if (n && t.emptyText && !Ext.isEmpty(e)) {
+            n.removeCls(t.emptyCls)
+        }
+        t.value = e;
+        t.applyEmptyText()
+    },
+    setRawValue: function(e) {
+        this.inputEl.dom.value = e == null ? "" : e
+    },
+    getValue: function() {
+        return this.value
+    },
+    getRawValue: function() {
+        return this.inputEl.dom.value
+    },
+    setValueWithReload: function(e, t, n) {
+        this.setFieldValue(t, n)
+    }
+});
+var tanggal = new Date;
+var tanggal2 = new Date;
+Ext.define("shiftmodel", {
+    extend: "Ext.data.Model",
+    fields: ["id_shift", "code_shift", "name_shift", "check_in", "break_out", "break_in", "check_out", "colour_shift"]
+});
+Ext.define("shiftmodel2", {
+    extend: "Ext.data.Model",
+    fields: ["id_shift", "code_shift", "name_shift", "check_in", "break_out", "break_in", "check_out", "colour_shift"]
+});
+var storeGrid = Ext.create("Ext.data.Store", {
+    model: "shiftmodel",
+    proxy: {
+        type: "ajax",
+        url: BASE_URL + "shift/get_allshift",
+        noCache: false,
+        actionMethods: "POST",
+        reader: {
+            type: "json",
+            root: "data",
+            idProperty: "id_shift"
+        }
+    },
+			    pageSize: 60,
+    sorters: [{
+        property: "id_shift",
+        direction: "ASC"
+    }]
+});
+var shiftGrid = Ext.create("Ext.grid.Panel", {
+    store: storeGrid,
+    id: "shiftGrid",
+    title: Lang.roster_grid_shifttitle,
+    columns: [{
+        header: "Id",
+        dataIndex: "id_shift",
+        hidden: true
+    }, {
+        header: Lang.attstatus_grid_id,
+        dataIndex: "code_shift",
+        menuDisabled: true,
+        width: 40,
+        align: "center",
+        tdCls: "shiftcolor"
+    }, {
+        header: Lang.roster_grid_shiftname,
+        dataIndex: "name_shift",
+        sortable: false,
+        menuDisabled: true,
+        flex: 1
+    }, {
+        header: Lang.shift_grid_checkin,
+        dataIndex: "check_in",
+        sortable: false,
+        menuDisabled: true,
+        flex: 1
+    }, {
+        header: Lang.shift_grid_breakout,
+        dataIndex: "break_out",
+        sortable: false,
+        menuDisabled: true,
+        flex: 1
+    }, {
+        header: Lang.shift_grid_breakin,
+        dataIndex: "break_in",
+        sortable: false,
+        menuDisabled: true,
+        flex: 1
+    }, {
+        header: Lang.shift_grid_checkout,
+        dataIndex: "check_out",
+        sortable: false,
+        menuDisabled: true,
+        flex: 1
+    }],
+    viewConfig: {
+        getRowClass: function(e, t) {
+            var n = e.get("code_shift");
+            return n
+        }
+    },
+    renderTo: Ext.getBody()
+});
+var shiftGrid2 = Ext.create("Ext.grid.Panel", {
+    store: storeGrid,
+    id: "shiftGrid2",
+    title: Lang.roster_grid_shifttitle,
+    columns: [{
+        header: "Id",
+        dataIndex: "id_shift",
+        hidden: true
+    }, {
+        header: Lang.attstatus_grid_id,
+        dataIndex: "code_shift",
+        menuDisabled: true,
+        width: 40,
+        align: "center",
+        tdCls: "shiftcolor"
+    }, {
+        header: Lang.roster_grid_shiftname,
+        dataIndex: "name_shift",
+        sortable: false,
+        menuDisabled: true,
+        flex: 1
+    }, {
+        header: Lang.shift_grid_checkin,
+        dataIndex: "check_in",
+        sortable: false,
+        menuDisabled: true,
+        flex: 1
+    }, {
+        header: Lang.shift_grid_breakout,
+        dataIndex: "break_out",
+        sortable: false,
+        menuDisabled: true,
+        flex: 1
+    }, {
+        header: Lang.shift_grid_breakin,
+        dataIndex: "break_in",
+        sortable: false,
+        menuDisabled: true,
+        flex: 1
+    }, {
+        header: Lang.shift_grid_checkout,
+        dataIndex: "check_out",
+        sortable: false,
+        menuDisabled: true,
+        flex: 1
+    }],
+    viewConfig: {
+        getRowClass: function(e, t) {
+            var n = e.get("code_shift");
+            return n
+        }
+    },
+    renderTo: Ext.getBody()
+});
+Ext.define("tldmodel", {
+    extend: "Ext.data.Model",
+    fields: ["userid", "name", "transdate", "transtime", "absence", "attendance", "editby"]
+});
+Ext.define("tldmodel2", {
+    extend: "Ext.data.Model",
+    fields: ["userid", "name", "transdate", "transtime", "absence", "attendance", "editby"]
+});
+var storeTld = Ext.create("Ext.data.Store", {
+    model: "tldmodel",
+    proxy: {
+        type: "ajax",
+        url: BASE_URL + "roster/gettld",
+        noCache: false,
+        actionMethods: "POST",
+        reader: {
+            type: "json",
+            root: "data"
+        }
+    },
+    sorters: [{
+        property: "transtime",
+        direction: "ASC"
+    }]
+});
+var storeTld2 = Ext.create("Ext.data.Store", {
+    model: "tldmodel2",
+    proxy: {
+        type: "ajax",
+        url: BASE_URL + "roster/gettldgroup",
+        noCache: false,
+        actionMethods: "POST",
+        reader: {
+            type: "json",
+            root: "data"
+        }
+    },
+    sorters: [{
+        property: "transtime",
+        direction: "ASC"
+    }]
+});
+var tldGrid = Ext.create("Ext.grid.Panel", {
+    height: 200,
+    id: "tldGrid",
+    isScrollable: true,
+    store: storeTld,
+    title: "Transaction Log Details",
+    columns: [{
+        header: "userid",
+        dataIndex: "userid",
+        hidden: true
+    }, {
+        header: Lang.grid_name,
+        dataIndex: "name",
+        sortable: false,
+        menuDisabled: true,
+        flex: 1
+    }, {
+        header: Lang.roster_grid_transdate,
+        dataIndex: "transdate",
+        sortable: false,
+        menuDisabled: true,
+        flex: 1
+    }, {
+        header: Lang.roster_grid_transtime,
+        dataIndex: "transtime",
+        sortable: false,
+        menuDisabled: true,
+        flex: 1
+    }, {
+        header: Lang.absstatus_title,
+        dataIndex: "absence",
+        sortable: false,
+        menuDisabled: true,
+        flex: 1
+    }, {
+        header: Lang.attstatus_title,
+        dataIndex: "attendance",
+        sortable: false,
+        menuDisabled: true,
+        flex: 1
+    }],
+    renderTo: Ext.getBody()
+});
+var tldGrid2 = Ext.create("Ext.grid.Panel", {
+    height: 200,
+    id: "tldGrid2",
+    isScrollable: true,
+    store: storeTld2,
+    title: "Transaction Log Details",
+    columns: [{
+        header: "userid",
+        dataIndex: "userid",
+        hidden: true
+    }, {
+        header: Lang.grid_name,
+        dataIndex: "name",
+        sortable: false,
+        menuDisabled: true,
+        flex: 1
+    }, {
+        header: Lang.roster_grid_transdate,
+        dataIndex: "transdate",
+        sortable: false,
+        menuDisabled: true,
+        flex: 1
+    }, {
+        header: Lang.roster_grid_transtime,
+        dataIndex: "transtime",
+        sortable: false,
+        menuDisabled: true,
+        flex: 1
+    }, {
+        header: Lang.absstatus_title,
+        dataIndex: "absence",
+        sortable: false,
+        menuDisabled: true,
+        flex: 1
+    }, {
+        header: Lang.attstatus_title,
+        dataIndex: "attendance",
+        sortable: false,
+        menuDisabled: true,
+        flex: 1
+    }, {
+        header: Lang.roster_grid_editby,
+        dataIndex: "editby",
+        sortable: false,
+        menuDisabled: true,
+        flex: 1
+    }],
+    renderTo: Ext.getBody()
+});
+Ext.define("rostermodel", {
+    extend: "Ext.data.Model",
+    fields: ["userid", "name", "group"]
+});
+var roStore = Ext.create("Ext.data.Store", {
+    model: "rostermodel",
+    groupField: "group",
+    proxy: {
+        type: "ajax",
+        url: BASE_URL + "roster/getrosters",
+        noCache: false,
+        actionMethods: "POST",
+        reader: {
+            type: "json",
+            root: "data",
+            idProperty: "userid"
+        }
+    },
+    sorters: [{
+        property: "userid",
+        direction: "ASC"
+    }]
+});
+var roStore2 = Ext.create("Ext.data.Store", {
+    model: "rostermodel",
+    groupField: "group",
+    proxy: {
+        type: "ajax",
+        url: BASE_URL + "roster/getrosters",
+        noCache: false,
+        actionMethods: "POST",
+        reader: {
+            type: "json",
+            root: "data",
+            idProperty: "userid"
+        }
+    },
+    sorters: [{
+        property: "userid",
+        direction: "ASC"
+    }]
+});
+var groupingrosFeature = Ext.create("Ext.grid.feature.Grouping", {
+    groupHeaderTpl: 'Group : {name} ({rows.length} Item{[values.rows.length > 1 ? "s" : ""]})'
+});
+var groupingrosFeature2 = Ext.create("Ext.grid.feature.Grouping", {
+    groupHeaderTpl: 'Group : {name} ({rows.length} Item{[values.rows.length > 1 ? "s" : ""]})'
+});
+var cellEditing = Ext.create("Ext.grid.plugin.CellEditing", {
+    pluginId: "cellplugin",
+    clicksToEdit: 2,
+	listeners: {
+		'beforeedit': function(e) {
+			if(bsedit==0)
+				e.cancel = true;
+		}
+	}
+});
+Ext.define("cmenumodel", {
+    extend: "Ext.data.Model",
+    fields: ["text", "id", "iconCls", "chk", "hidden"]
+});
+var cboshift = Ext.create("Ext.data.Store", {
+    fields: ["code_shift", "name_shift"],
+    autoSync: true,
+    proxy: {
+        type: "ajax",
+        noCache: false,
+        actionMethods: "POST",
+        url: BASE_URL + "roster/get_shiftdetail",
+        reader: {
+            type: "json",
+            root: "data",
+            idProperty: "code_shift"
+        }
+    },
+    sorters: [{
+        property: "code_shift",
+        direction: "ASC"
+    }]
+});
+var sem = Ext.create("Ext.selection.RowModel", {
+    mode: "MULTI"
+});
+var smx = Ext.create('Ext.selection.CheckboxModel');
+var sem2 = Ext.create("Ext.selection.RowModel", {
+    mode: "MULTI"
+});
+var formassignshift = Ext.create("Ext.form.Panel", {
+    frame: true,
+    id: "formassignshift",
+    method: "POST",
+    bodyPadding: 10,
+    renderTo: Ext.getBody(),
+    url: BASE_URL + "roster/assignshift",
+    items: [{
+        xtype: "fieldcontainer",
+        layout: "hbox",
+        items: [{
+            xtype: "checkbox",
+            fieldLabel: Lang.day_monday,
+            margin: "0 35 0 0",
+            name: "monday",
+            checked: true
+        }, {
+            xtype: "combobox",
+            id: "mondayshift",
+            name: "mondayshift",
+            store: cboshift,
+            width: 250,
+            queryMode: "local",
+            displayField: "name_shift",
+            valueField: "code_shift"
+        }]
+    }, {
+        xtype: "fieldcontainer",
+        layout: "hbox",
+        items: [{
+            xtype: "checkbox",
+            fieldLabel: Lang.day_tuesday,
+            margin: "0 35 0 0",
+            name: "tuesday",
+            checked: true
+        }, {
+            xtype: "combobox",
+            id: "tuesdayshift",
+            name: "tuesdayshift",
+            store: cboshift,
+            width: 250,
+            queryMode: "local",
+            displayField: "name_shift",
+            valueField: "code_shift"
+        }]
+    }, {
+        xtype: "fieldcontainer",
+        layout: "hbox",
+        items: [{
+            xtype: "checkbox",
+            fieldLabel: Lang.day_wednesday,
+            margin: "0 35 0 0",
+            name: "wednesday",
+            checked: true
+        }, {
+            xtype: "combobox",
+            id: "wednesdayshift",
+            name: "wednesdayshift",
+            store: cboshift,
+            width: 250,
+            queryMode: "local",
+            displayField: "name_shift",
+            valueField: "code_shift"
+        }]
+    }, {
+        xtype: "fieldcontainer",
+        layout: "hbox",
+        items: [{
+            xtype: "checkbox",
+            fieldLabel: Lang.day_thursday,
+            margin: "0 35 0 0",
+            name: "thursday",
+            checked: true
+        }, {
+            xtype: "combobox",
+            id: "thursdayshift",
+            name: "thursdayshift",
+            store: cboshift,
+            width: 250,
+            queryMode: "local",
+            displayField: "name_shift",
+            valueField: "code_shift"
+        }]
+    }, {
+        xtype: "fieldcontainer",
+        layout: "hbox",
+        items: [{
+            xtype: "checkbox",
+            fieldLabel: Lang.day_friday,
+            margin: "0 35 0 0",
+            name: "friday",
+            checked: true
+        }, {
+            xtype: "combobox",
+            id: "fridayshift",
+            name: "fridayshift",
+            store: cboshift,
+            width: 250,
+            queryMode: "local",
+            displayField: "name_shift",
+            valueField: "code_shift"
+        }]
+    }, {
+        xtype: "fieldcontainer",
+        layout: "hbox",
+        items: [{
+            xtype: "checkbox",
+            fieldLabel: Lang.day_saturday,
+            margin: "0 35 0 0",
+            name: "saturday",
+            checked: true
+        }, {
+            xtype: "combobox",
+            id: "saturdayshift",
+            name: "saturdayshift",
+            store: cboshift,
+            width: 250,
+            queryMode: "local",
+            displayField: "name_shift",
+            valueField: "code_shift"
+        }]
+    }, {
+        xtype: "fieldcontainer",
+        layout: "hbox",
+        items: [{
+            xtype: "checkbox",
+            fieldLabel: Lang.day_sunday,
+            margin: "0 35 0 0",
+            name: "sunday",
+            checked: true
+        }, {
+            xtype: "combobox",
+            id: "sundayshift",
+            name: "sundayshift",
+            store: cboshift,
+            width: 250,
+            queryMode: "local",
+            displayField: "name_shift",
+            valueField: "code_shift"
+        }]
+    }],
+    buttons: [{
+        text: Lang.device_charea_button,
+        handler: function() {
+            formassignshift.getForm().submit({
+                params: {
+                    userid: assignshiftwin.myExtraParams.userid,
+                    datestart: assignshiftwin.myExtraParams.datestart,
+                    datend: assignshiftwin.myExtraParams.datend
+                },
+                waitMsg: Lang.msg_waiting,
+                success: function(e, t) {
+                    roStore.load()
+                }
+            });
+            assignshiftwin.hide()
+        }
+    }]
+});
+var assignshiftwin = Ext.create("Ext.window.Window", {
+    width: 480,
+    closable: true,
+    closeAction: "hide",
+    height: 325,
+    border: false,
+    minWidth: 480,
+    minHeight: 300,
+    layout: "fit",
+    title: Lang.signshift_tbar_assign,
+    modal: true,
+    items: [formassignshift]
+});
+var searchFieldroster = Ext.create("Ext.form.TextField", {
+    emptyText: "cari nama...",
+    enableKeyEvents: true,
+    listeners: {
+        keyup: function(me, e) {
+            roStore.clearFilter();
+			roStore.filterBy(function(rec){
+				if(rec.get('name').toUpperCase().indexOf(me.getValue().toUpperCase()) > -1)
+					return rec.get('name').toUpperCase().indexOf(me.getValue().toUpperCase()) > -1;
+				else if(rec.get('userid').toUpperCase().indexOf(me.getValue().toUpperCase()) > -1)
+					return rec.get('userid').toUpperCase().indexOf(me.getValue().toUpperCase()) > -1;
+			});
+        }
+    }
+});
+var rosterGrid = Ext.create("Ext.grid.Panel", {
+    store: roStore,
+		 selModel: sem,
+    id: "griddiroster",
+    isScrollable: true,
+    enableDragDrop: true,
+    border: false,
+    plugins: [cellEditing],
+    columns: [],
+    selType: "rowmodel",
+    dockedItems: [{
+        xtype: "toolbar",
+        items: [{
+            itemId: "save",
+            text: Lang.toolbar_save,
+            iconCls: "save",
+            menu: [{
+                itemId: "saverow",
+                text: Lang.roster_tbar_saverow,
+                iconCls: "saverow",
+                handler: function() {
+                    var e = Ext.MessageBox.wait(Lang.msg_waiting, Lang.wait);
+                    var t = rosterGrid.getView().getSelectionModel().getSelection();
+                    if (t.length == 0) {
+                        Ext.MessageBox.alert(Lang.error, Lang.msg_selectone)
+                    } else {
+                        var n = rosterGrid.getStore();
+                        var r = "";
+                        for (i = 0; i < t.length; i++) {
+                            var s = n.indexOf(t[i]);
+                            var o = rosterGrid.store.getRange(s, s);
+                            Ext.each(o, function(e, t) {
+                                for (var n in e.data) {
+                                    r = r + n + "=" + e.data[n] + "	"
+                                }
+                            });
+                            r = r + "\n"
+                        }
+                        Ext.Ajax.request({
+                            url: BASE_URL + "roster/saveroster",
+                            method: "POST",
+                            params: {
+                                recpush: r,
+                                datestart: Ext.getCmp("form_date").getValue(),
+                                datend: Ext.getCmp("to_date").getValue()
+                            },
+                            waitMsg: Lang.msg_loading,
+                            success: function(t, n) {
+                                var r = Ext.decode(t.responseText);
+                                if (r.responseText == "success") {
+                                    e.hide();
+                                    Ext.MessageBox.alert(Lang.success, r.responseText)
+                                } else {
+                                    e.hide();
+                                    Ext.MessageBox.alert(Lang.error, r.responseText)
+                                }
+                            }
+                        })
+                    }
+                }
+            }, {
+                itemId: "saveall",
+                text: Lang.roster_tbar_saveall,
+                iconCls: "saveall",
+                handler: function() {
+                    var e = Ext.MessageBox.wait(Lang.msg_waiting, Lang.wait);
+                    var t = "";
+                    var n = rosterGrid.store.getRange();
+                    Ext.each(n, function(e, n) {
+                        for (var r in e.data) {
+                            t = t + r + "=" + e.data[r] + "	"
+                        }
+                        t = t + "\n"
+                    });
+                    Ext.Ajax.request({
+                        url: BASE_URL + "roster/saveroster",
+                        method: "POST",
+                        params: {
+                            recpush: t,
+                            datestart: Ext.getCmp("form_date").getValue(),
+                            datend: Ext.getCmp("to_date").getValue()
+                        },
+                        waitMsg: Lang.msg_loading,
+                        success: function(t, n) {
+                            var r = Ext.decode(t.responseText);
+                            if (r.responseText == "success") {
+                                e.hide();
+                                Ext.MessageBox.alert(Lang.success, r.responseText)
+                            } else {
+                                e.hide();
+                                Ext.MessageBox.alert(Lang.error, r.responseText)
+                            }
+                        }
+                    })
+                }
+            }]
+        }, "-", {
+            itemId: "weeklyshift",
+            text: Lang.roster_tbar_weekshift,
+            iconCls: "weekshift",
+            handler: function() {
+                var e = rosterGrid.getSelectionModel().getSelection();
+                selected = "";
+                if (e.length == 0) {
+                    Ext.MessageBox.alert(Lang.error, Lang.msg_selectone)
+                } else {
+                    Ext.each(e, function(e) {
+                        selected = selected + e.data.userid + ","
+                    });
+                    assignshiftwin.myExtraParams = {
+                        userid: selected,
+                        datestart: Ext.getCmp("form_date").getValue(),
+                        datend: Ext.getCmp("to_date").getValue()
+                    };
+                    cboshift.load();
+                    assignshiftwin.show()
+                }
+            }
+        }, "-", {
+            itemId: "status",
+            text: Lang.roster_tbar_status,
+            iconCls: "status",
+            menu: [						
+						{
+                itemId: "attstatus",
+                text: Lang.attstatus_title,
+                iconCls: "asattstat",
+                handler: function() {
+                    var e = rosterGrid.getSelectionModel().getSelection();
+                    selected = "";
+                    if (e.length == 0) {
+                        Ext.MessageBox.alert(Lang.error, Lang.msg_selectone)
+                    } else {
+                        Ext.each(e, function(e) {
+                            selected += e.data.userid + '|';
+														
+                        });
+											
+                        attstatWindow.myExtraParams = {
+                            userid: selected
+                        };
+                        atrosterStore.load();
+                        var t = new Date(tanggalan * 1e3);
+                        Ext.getCmp("fromat_periode").setValue(t);
+                        Ext.getCmp("toat_periode").setValue(t);
+                        <?php if($this->my_usession->userdata('user_level')==13) { ?>
+						Ext.getCmp("startattilog").setDisabled(true);
+                        Ext.getCmp("endattilog").setDisabled(true);
+						<?php } ?>
+                        attstatWindow.show()
+                    }
+                }
+				},{
+                itemId: "absstatus",
+                text: Lang.absstatus_title,
+                iconCls: "asabsstat",
+                handler: function() {
+                    var e = rosterGrid.getSelectionModel().getSelection();
+												
+                    selected = "";
+                   // if (e.length == 0) {
+                   //     Ext.MessageBox.alert(Lang.error, Lang.msg_selectone)
+                    //} else {
+                        Ext.each(e, function(e) {
+														selected += e.data.userid + '|';
+                        });
+                        absstatWindow.myExtraParams = {
+														orgid: Ext.getCmp("combodeptsm1").getValue(),							
+                            userid: selected
+                        };
+                        abrosterStore.load();
+                        var t = new Date(tanggalan * 1e3);
+                        Ext.getCmp("fromab_periode").setValue(t);
+                        Ext.getCmp("toab_periode").setValue(t);
+                        absstatWindow.show()
+                   // }
+                }
+            }, {
+                itemId: "clrstatus",
+                text: Lang.roster_tbar_clearstatus,
+                iconCls: "clearstatus",
+                handler: function() {
+                    var e = rosterGrid.getSelectionModel().getSelection();
+                    selected = "";
+                    if (e.length == 0) {
+                        Ext.MessageBox.alert(Lang.error, Lang.msg_selectone)
+                    } else {
+                        Ext.each(e, function(e) {
+                            selected = selected + e.data.userid + ","
+                        });
+                        clrstatWindow.myExtraParams = {
+                            userid: selected
+                        };
+                        var t = new Date(tanggalan * 1e3);
+                        Ext.getCmp("fromc_periode").setValue(t);
+                        Ext.getCmp("toc_periode").setValue(t);
+                        clrstatWindow.show()
+                    }
+                }
+            }]
+        }, "-", {
+            itemId: "editan",
+            text: "Edit",
+            iconCls: "application",
+            menu: [{
+                itemId: "editcopy",
+                text: Lang.roster_tbar_copy,
+                iconCls: "editcopy",
+                handler: function() {
+                    var e = "";
+                    var t = rosterGrid.getView().getSelectionModel().getSelection();
+                    if (t.length == 0) {
+                        Ext.MessageBox.alert(Lang.error, Lang.msg_selectonlyone)
+                    } else {
+                        var n = rosterGrid.getStore();
+                        var r = n.indexOf(t[0]);
+                        var i = rosterGrid.store.getRange(r, r);
+                        Ext.each(i, function(t, n) {
+                            for (var r in t.data) {
+                                e = e + r + "=" + t.data[r] + "	"
+                            }
+                        });
+                        var s = "";
+                        var o = rosterGrid.store.getRange();
+                        Ext.each(o, function(e, t) {
+                            for (var n in e.data) {
+                                s = s + n + "=" + e.data[n] + "	"
+                            }
+                            s = s + "\n"
+                        });
+                        Ext.Ajax.request({
+                            url: BASE_URL + "roster/copyroster",
+                            method: "POST",
+                            params: {
+                                recpush: e,
+                                recpost: s
+                            },
+                            waitMsg: Lang.msg_waiting
+                        })
+                    }
+                }
+            }, {
+                itemId: "editpaste",
+                text: Lang.roster_tbar_paste,
+                iconCls: "editpaste",
+                menu: [{
+                    itemId: "pasterow",
+                    text: Lang.roster_tbar_pastetorow,
+                    iconCls: "pasterow",
+                    handler: function() {
+                        var e = rosterGrid.getSelectionModel().getSelection();
+                        selected = "";
+                        Ext.each(e, function(e) {
+                            selected = selected + e.data.userid + ","
+                        });
+                        Ext.Ajax.request({
+                            url: BASE_URL + "roster/pasteroster",
+                            method: "POST",
+                            params: {
+                                userid: selected
+                            },
+                            waitMsg: Lang.msg_waiting,
+                            success: function(e, t) {
+                                var n = Ext.decode(e.responseText);
+                                if (n.responseText == "success") {
+                                    roStore.load()
+                                } else {
+                                    Ext.MessageBox.alert(Lang.error, Lang.msg_roster_copyfirst)
+                                }
+                            }
+                        })
+                    }
+                }, {
+                    itemId: "pasteall",
+                    text: Lang.roster_tbar_pastetoall,
+                    iconCls: "pasteall",
+                    handler: function() {
+                        Ext.Ajax.request({
+                            url: BASE_URL + "roster/pasteallroster",
+                            method: "POST",
+                            waitMsg: Lang.msg_waiting,
+                            success: function(e, t) {
+                                var n = Ext.decode(e.responseText);
+                                if (n.responseText == "success") {
+                                    roStore.load()
+                                } else {
+                                    Ext.MessageBox.alert(Lang.error, Lang.msg_roster_copyfirst)
+                                }
+                            }
+                        })
+                    }
+                }]
+            }]
+        }, "-", combodeptsm1, {
+            xtype: "datefield",
+            fieldLabel: Lang.signshift_form_from,
+            labelWidth: 30,
+            width: 140,
+            name: "form_date",
+            id: "form_date",
+            format: "Y/m/d",
+            value: new Date(tanggal.getFullYear(), tanggal.getMonth(), 1)
+        }, {
+            xtype: "datefield",
+            fieldLabel: Lang.signshift_form_to,
+            labelWidth: 20,
+            width: 130,
+            name: "to_date",
+            id: "to_date",
+            format: "Y/m/d",
+            value: new Date(tanggal.getFullYear(), tanggal.getMonth() + 1, 0)
+        }, {
+            itemId: "view",
+            text: Lang.roster_tbar_generate,
+            iconCls: "view",
+            handler: function() {
+                var e = Ext.MessageBox.wait(Lang.msg_waiting, Lang.wait);
+                Ext.Ajax.request({
+                    url: BASE_URL + "roster/createroster",
+                    method: "POST",
+                    waitMsg: Lang.msg_waiting,
+                    params: {
+                        orgid: Ext.getCmp("combodeptsm1").getValue(),
+                        datestart: Ext.getCmp("form_date").getValue(),
+                        datend: Ext.getCmp("to_date").getValue()
+                    },
+                    success: function(t, n) {
+                        e.hide();
+                        getroster(t, n);
+						var bt = Ext.decode(t.responseText);
+						rosterGrid.down('#save').setDisabled(!bt.bukatutup);
+						rosterGrid.down('#weeklyshift').setDisabled(!bt.bukatutup);
+						rosterGrid.down('#status').setDisabled(!bt.bukatutup);
+						rosterGrid.down('#editan').setDisabled(!bt.bukatutup);
+						if(!bt.bukatutup) {
+							Ext.MessageBox.alert('Perhatian!', 'Menu nonaktif, periode ditutup!');
+							bsedit = 0;
+						} else {
+							bsedit = 1;
+						}
+                    },
+                    failure: function(e, t) {
+                        Ext.MessageBox.alert(Lang.error, Lang.msg_roster_failgenerate);
+                    }
+                })
+            }
+        },'-', {
+					itemId:'empexcel', text: 'Excel', iconCls: 'excel',
+					menu: [{
+						itemId:'import', text: Lang.device_import_button, iconCls: 'import',
+						handler: function() {
+								Ext.create('Ext.window.Window', {
+									width : 300,
+									closable : true,
+									closeAction: 'hide',
+									height: 50,
+									border: false,
+									minWidth: 250,
+									minHeight: 110,
+									layout: 'fit', 
+									title: Lang.device_downusb_title,
+									modal: true,
+									items: [formfileimport]
+								}).show();
+							}
+					}, {
+						itemId:'export', text: Lang.device_tbar_template, iconCls: 'export',
+						handler: function() {
+								if(Ext.getCmp('combodeptsm1').getValue()==undefined)
+									window.open(BASE_URL + 'roster/exportexcel?datestart=' + Ext.getCmp('form_date').getValue().getFullYear()+'-'+(Ext.getCmp('form_date').getValue().getMonth()+1)+'-'+Ext.getCmp('form_date').getValue().getDate() + '&datend=' + Ext.getCmp('to_date').getValue().getFullYear()+'-'+(Ext.getCmp('to_date').getValue().getMonth()+1)+'-'+Ext.getCmp('to_date').getValue().getDate());
+								else	
+									window.open(BASE_URL + 'roster/exportexcel?orgid=' + Ext.getCmp('combodeptsm1').getValue() + '&datestart=' + Ext.getCmp('form_date').getValue().getFullYear()+'-'+(Ext.getCmp('form_date').getValue().getMonth()+1)+'-'+Ext.getCmp('form_date').getValue().getDate() + '&datend=' + Ext.getCmp('to_date').getValue().getFullYear()+'-'+(Ext.getCmp('to_date').getValue().getMonth()+1)+'-'+Ext.getCmp('to_date').getValue().getDate());
+						}
+					}]
+			}, "->", searchFieldroster]
+    }],
+    viewConfig: {
+        listeners: {
+            cellclick: function(e, t, n, r, i, s, o) {
+                var u = e.getHeaderByCell(t);
+                var a = e.getPositionByEvent(o);
+                var f = a.column;
+                var l = u.dataIndex;
+                Ext.select("div.BLACK-AT").removeCls("BLACK-AT");
+                Ext.select("div.BLACK-AB").removeCls("BLACK-AB");
+                Ext.select("div.BLACK-NWDSAT").removeCls("BLACK-NWDSAT");
+                Ext.select("div.BLACK-NWDSAB").removeCls("BLACK-NWDSAB");
+                Ext.select("div.BLACK-NWDS").removeCls("BLACK-NWDS");
+                Ext.select("div.BLACK").removeCls("BLACK");
+                if (r.get(l).indexOf("#AT") != -1) {
+                    Ext.get(o.target).addCls("BLACK-AT")
+                } else if (r.get(l).indexOf("#AB") != -1) {
+                    Ext.get(o.target).addCls("BLACK-AB")
+                } else if (r.get(l).indexOf("#NWDSAB") != -1) {
+                    Ext.get(o.target).addCls("BLACK-NWDSAB")
+                } else if (r.get(l).indexOf("#NWDSAT") != -1) {
+                    Ext.get(o.target).addCls("BLACK-NWDSAT")
+                } else if (r.get(l).indexOf("#NWDS") != -1) {
+                    Ext.get(o.target).addCls("BLACK-NWDS")
+                } else {
+                    Ext.get(o.target).addCls("BLACK")
+                }
+                tanggalan = l;
+                storeTld.load({
+                    params: {
+                        userid: r.get("userid"),
+                        coldate: l,
+                        datarec: r.get(l)
+                    }
+                })
+            },
+            scope: this
+        }
+    },
+    features: [groupingrosFeature],
+    renderTo: Ext.getBody()
+});
+var rosterGrid2 = Ext.create("Ext.grid.Panel", {
+    store: roStore2,
+    id: "griddiroster2",
+    isScrollable: true,
+    enableDragDrop: true,
+    selModel: sem2,
+    border: false,
+    columns: [],
+    selType: "cellmodel",
+    dockedItems: [{
+        xtype: "toolbar",
+        items: [{
+            itemId: "groupshift",
+            text: Lang.groupshift_tbar_assign,
+            iconCls: "groupshift",
+            handler: function() {
+                cboshift.load();
+                formassigngroupshift.getForm().load({
+                    url: BASE_URL + "roster/getgroupshift",
+                    method: "POST"
+                });
+                assigngroupshiftwin.show()
+            }
+        }, {
+            itemId: "attstatus2",
+            text: Lang.attstatus_title,
+            iconCls: "asattstat",
+            handler: function() {
+                var e = rosterGrid2.getSelectionModel().getSelection();
+                selected = "";
+                if (e.length == 0) {
+                    Ext.MessageBox.alert(Lang.error, Lang.msg_selectone)
+                } else {
+                    Ext.each(e, function(e) {
+                        selected = selected + e.data.userid + ","
+                    });
+                    attstatWindow2.myExtraParams = {
+                        userid: selected
+                    };
+                    atrosterStore2.load();
+                    var t = new Date(tanggalan2 * 1e3);
+                    Ext.getCmp("fromat_periode2").setValue(t);
+                    Ext.getCmp("toat_periode2").setValue(t);
+                    attstatWindow2.show()
+                }
+            }
+        }, {
+            itemId: "absstatus2",
+            text: Lang.absstatus_title,
+            iconCls: "asabsstat",
+            handler: function() {
+                var e = rosterGrid2.getSelectionModel().getSelection();
+                selected = "";
+                if (e.length == 0) {
+                    Ext.MessageBox.alert(Lang.error, Lang.msg_selectone)
+                } else {
+                    Ext.each(e, function(e) {
+                        selected = selected + e.data.userid + ","
+                    });
+                    absstatWindow2.myExtraParams = {
+                        userid: selected
+                    };
+                    abrosterStore2.load();
+                    var t = new Date(tanggalan2 * 1e3);
+                    Ext.getCmp("fromab_periode2").setValue(t);
+                    Ext.getCmp("toab_periode2").setValue(t);
+                    absstatWindow2.show()
+                }
+            }
+        }, {
+            itemId: "clrstatus2",
+            text: Lang.roster_tbar_clearstatus,
+            iconCls: "clearstatus",
+            handler: function() {
+                var e = rosterGrid2.getSelectionModel().getSelection();
+                selected = "";
+                if (e.length == 0) {
+                    Ext.MessageBox.alert(Lang.error, Lang.msg_selectone)
+                } else {
+                    Ext.each(e, function(e) {
+                        selected = selected + e.data.userid + ","
+                    });
+                    clrstatWindow2.myExtraParams = {
+                        userid: selected
+                    };
+                    var t = new Date(tanggalan2 * 1e3);
+                    Ext.getCmp("fromc_periode2").setValue(t);
+                    Ext.getCmp("toc_periode2").setValue(t);
+                    clrstatWindow2.show()
+                }
+            }
+        }, "-", combodeptsm2, {
+            xtype: "datefield",
+            fieldLabel: Lang.signshift_form_from,
+            labelWidth: 30,
+            width: 140,
+            name: "form_date2",
+            id: "form_date2",
+            format: "Y/m/d",
+            value: new Date(tanggal.getFullYear(), tanggal.getMonth(), 1)
+        }, {
+            xtype: "datefield",
+            fieldLabel: Lang.signshift_form_to,
+            labelWidth: 20,
+            width: 130,
+            name: "to_date2",
+            id: "to_date2",
+            format: "Y/m/d",
+            value: new Date(tanggal.getFullYear(), tanggal.getMonth() + 1, 0)
+        }, {
+            itemId: "view2",
+            text: Lang.roster_tbar_generate,
+            iconCls: "view",
+            handler: function() {
+                var e = Ext.MessageBox.wait(Lang.msg_waiting, Lang.wait);
+                Ext.Ajax.request({
+                    url: BASE_URL + "roster/creategrouproster",
+                    method: "POST",
+                    waitMsg: Lang.msg_waiting,
+                    params: {
+                        orgid: Ext.getCmp("combodeptsm2").getValue(),
+                        datestart: Ext.getCmp("form_date2").getValue(),
+                        datend: Ext.getCmp("to_date2").getValue()
+                    },
+                    success: function(t, n) {
+                        e.hide();
+                        getroster2(t, n)
+                    },
+                    failure: function(e, t) {
+                        Ext.MessageBox.alert(Lang.error, Lang.msg_roster_failgenerate)
+                    }
+                })
+            }
+        }]
+    }],
+    viewConfig: {
+        listeners: {
+            cellclick: function(e, t, n, r, i, s, o) {
+                var u = e.getHeaderByCell(t);
+                var a = e.getPositionByEvent(o);
+                var f = a.column;
+                var l = u.dataIndex;
+                Ext.select("div.BLACK-AT").removeCls("BLACK-AT");
+                Ext.select("div.BLACK-AB").removeCls("BLACK-AB");
+                Ext.select("div.BLACK-NWDSAT").removeCls("BLACK-NWDSAT");
+                Ext.select("div.BLACK-NWDSAB").removeCls("BLACK-NWDSAB");
+                Ext.select("div.BLACK-NWDS").removeCls("BLACK-NWDS");
+                Ext.select("div.BLACK").removeCls("BLACK");
+                if (r.get(l).indexOf("#AT") != -1) {
+                    Ext.get(o.target).addCls("BLACK-AT")
+                } else if (r.get(l).indexOf("#AB") != -1) {
+                    Ext.get(o.target).addCls("BLACK-AB")
+                } else if (r.get(l).indexOf("#NWDSAB") != -1) {
+                    Ext.get(o.target).addCls("BLACK-NWDSAB")
+                } else if (r.get(l).indexOf("#NWDSAT") != -1) {
+                    Ext.get(o.target).addCls("BLACK-NWDSAT")
+                } else if (r.get(l).indexOf("#NWDS") != -1) {
+                    Ext.get(o.target).addCls("BLACK-NWDS")
+                } else {
+                    Ext.get(o.target).addCls("BLACK")
+                }
+                tanggalan2 = l;
+                storeTld2.load({
+                    params: {
+                        userid: r.get("userid"),
+                        coldate: l,
+                        datarec: r.get(l)
+                    }
+                })
+            },
+            scope: this
+        }
+    },
+    features: [groupingrosFeature2],
+    renderTo: Ext.getBody()
+});
+var formfileimport = Ext.create("Ext.form.Panel", {
+    frame: true,
+    id: "formfileimport",
+    method: "POST",
+    bodyPadding: 10,
+    renderTo: Ext.getBody(),
+    url: BASE_URL + "roster/importexcel",
+    items: [{
+        xtype: "filefield",
+        name: "fileexcel",
+        fieldLabel: Lang.device_downusb_label,
+        labelWidth: 50,
+        msgTarget: "side",
+        allowBlank: false,
+        anchor: "100%",
+        buttonText: Lang.device_downusb_browse
+    }],
+    buttons: [{
+        text: Lang.device_import_button,
+        handler: function() {
+            formfileimport.getForm().submit({
+                waitMsg: Lang.msg_waiting,
+                success: function(e, t) {
+                    var n = rosterGrid;
+                    var r = n.getStore();
+                    var i = r.model.prototype.fields;
+                    var s = t.result.field;
+                    var o = s.split("	");
+                    var u = o.length - 1;
+                    var a = t.result.datagagal;
+                    var f = t.result.nonik;
+                    if (a != "") {
+                        Ext.MessageBox.alert(Lang.warning, Lang.msg_roster_unimport + " : " + a + "!")
+                    }
+                    if (f != 0) {
+                        Ext.MessageBox.alert(Lang.warning, Lang.msg_roster_badgenumber1 + " " + f + " " + Lang.msg_roster_badgenumber2)
+                    }
+                    var l = [];
+                    for (g = 0; g < u; g++) {
+                        var c = false;
+                        var h = o[g];
+                        if (h.indexOf("#") != -1) {
+                            var p = h.split("#");
+                            h = p[0];
+                            c = true
+                        }
+                        i.add(Ext.create("Ext.data.Field", {
+                            name: h
+                        }));
+                        for (var d = 0; d < r.data.items.length; d++) {
+                            r.data.items[d].data[h] = ""
+                        }
+                        if (h == "userid") {
+                            l.push({
+                                header: Lang.grid_userid,
+                                dataIndex: "userid",
+                                width: 80
+                            })
+                        } else if (h == "name") {
+                            l.push({
+                                header: Lang.grid_name,
+                                dataIndex: h,
+                                sortable: false,
+                                menuDisabled: true,
+                                width: 150
+                            })
+                        } else {
+                            var v = new Date(h * 1e3);
+                            if (c) {
+                                l.push({
+                                    header: v.getDate(),
+                                    dataIndex: h,
+                                    childEls: ["titleContainer"],
+                                    tdCls: "red",
+                                    sortable: false,
+                                    align: "center",
+                                    menuDisabled: true,
+                                    width: 28,
+                                    editor: {
+                                        allowBlank: true
+                                    },
+                                    listeners: {
+                                        afterrender: function(e) {
+                                            e.titleContainer.setStyle({
+                                                "background-color": "red"
+                                            })
+                                        }
+                                    },
+                                    renderer: function(e, t, n, r, i, s) {
+                                        if (e.indexOf("#") != -1) {
+                                            t.tdCls = e.replace("#", "-");
+                                            va = e.split("#");
+                                            return va[0]
+                                        } else {
+                                            t.tdCls = e;
+                                            return e
+                                        }
+                                    }
+                                })
+                            } else {
+                                l.push({
+                                    header: v.getDate(),
+                                    dataIndex: h,
+                                    sortable: false,
+                                    align: "center",
+                                    menuDisabled: true,
+                                    width: 28,
+                                    editor: {
+                                        allowBlank: true
+                                    },
+                                    renderer: function(e, t, n, r, i, s) {
+                                        if (e.indexOf("#NWDS#") != -1) {
+                                            t.tdCls = e.replace("#NWDS#", "-");
+                                            va = e.split("#NWDS#");
+                                            return "<font color='red'>" + va[0] + "</font>"
+                                        } else if (e.indexOf("#") != -1) {
+                                            t.tdCls = e.replace("#", "-");
+                                            va = e.split("#");
+                                            return va[0]
+                                        } else {
+                                            t.tdCls = e;
+                                            return e
+                                        }
+                                    }
+                                })
+                            }
+                        }
+                    }
+                    n.reconfigure(null, l);
+                    roStore.load();
+                    rosterGrid.show()
+                }
+            })
+        }
+    }]
+});
+var getroster = function(e, t) {
+    var n = Ext.decode(e.responseText);
+    if (n.responseText == "success") {
+        var r = rosterGrid;
+        var i = r.getStore();
+        var s = i.model.prototype.fields;
+        var o = n.field.split("	");
+        var u = o.length - 1;
+        var a = [];
+        for (g = 0; g < u; g++) {
+            var f = false;
+            var l = o[g];
+            if (l.indexOf("#") != -1) {
+                var c = l.split("#");
+                l = c[0];
+                f = true
+            }
+            s.add(Ext.create("Ext.data.Field", {
+                name: l
+            }));
+            for (var h = 0; h < i.data.items.length; h++) {
+                i.data.items[h].data[l] = ""
+            }
+            if (l == "userid") {
+                a.push({
+                    header: Lang.grid_userid,
+                    dataIndex: "userid",
+                    width: 80,
+					locked: true
+                })
+            } else if (l == "name") {
+                a.push({
+                    header: Lang.grid_name,
+                    dataIndex: l,
+                    sortable: false,
+                    menuDisabled: true,
+                    width: 150,
+					locked: true
+                })
+            } else {
+                var p = new Date(l * 1e3);
+                if (f) {
+                    a.push({
+                        header: p.getDate(),
+                        dataIndex: l,
+                        childEls: ["titleContainer"],
+                        tdCls: "red",
+                        sortable: false,
+                        align: "center",
+                        menuDisabled: true,
+                        width: 28,
+                        editor: {
+                            allowBlank: true
+                        },
+                        listeners: {
+                            afterrender: function(e) {
+                                e.titleContainer.setStyle({
+                                    "background-color": "red"
+                                })
+                            }
+                        },
+                        renderer: function(e, t, n, r, i, s) {
+                            if (e.indexOf("#") != -1) {
+                                t.tdCls = e.replace("#", "-");
+                                va = e.split("#");
+                                return va[0]
+                            } else {
+                                t.tdCls = e;
+                                return e
+                            }
+                        }
+                    })
+                } else {
+                    a.push({
+                        header: p.getDate(),
+                        dataIndex: l,
+                        sortable: false,
+                        align: "center",
+                        menuDisabled: true,
+                        width: 28,
+                        editor: {
+                            allowBlank: true
+                        },
+                        renderer: function(e, t, n, r, i, s) {
+                            if (e.indexOf("#NWDS#") != -1) {
+                                t.tdCls = e.replace("#NWDS#", "-");
+                                va = e.split("#NWDS#");
+                                return "<font color='red'>" + va[0] + "</font>"
+                            } else if (e.indexOf("#") != -1) {
+                                t.tdCls = e.replace("#", "-");
+                                va = e.split("#");
+                                return va[0]
+                            } else {
+                                t.tdCls = e;
+                                return e
+                            }
+                        }
+                    })
+                }
+            }
+        }
+        r.reconfigure(null, a);
+        roStore.load();
+        rosterGrid.show()
+    } else {
+        Ext.MessageBox.alert(Lang.error, n.responseText)
+    }
+};
+var getroster2 = function(e, t) {
+    var n = Ext.decode(e.responseText);
+    if (n.responseText == "success") {
+        var r = rosterGrid2;
+        var i = r.getStore();
+        var s = i.model.prototype.fields;
+        var o = n.field.split("	");
+        var u = o.length - 1;
+        var a = [];
+        for (g = 0; g < u; g++) {
+            var f = false;
+            var l = o[g];
+            if (l.indexOf("#") != -1) {
+                var c = l.split("#");
+                l = c[0];
+                f = true
+            }
+            s.add(Ext.create("Ext.data.Field", {
+                name: l
+            }));
+            for (var h = 0; h < i.data.items.length; h++) {
+                i.data.items[h].data[l] = ""
+            }
+            if (l == "userid") {
+                a.push({
+                    header: Lang.grid_userid,
+                    dataIndex: "userid",
+                    width: 80,
+					locked: true
+                })
+            } else if (l == "name") {
+                a.push({
+                    header: Lang.grid_name,
+                    dataIndex: l,
+                    sortable: false,
+                    menuDisabled: true,
+                    width: 150,
+					locked: true
+                })
+            } else {
+                var p = new Date(l * 1e3);
+                if (f) {
+                    a.push({
+                        header: p.getDate(),
+                        dataIndex: l,
+                        childEls: ["titleContainer"],
+                        tdCls: "red",
+                        sortable: false,
+                        align: "center",
+                        menuDisabled: true,
+                        width: 28,
+                        editor: {
+                            allowBlank: true
+                        },
+                        listeners: {
+                            afterrender: function(e) {
+                                e.titleContainer.setStyle({
+                                    "background-color": "red"
+                                })
+                            }
+                        },
+                        renderer: function(e, t, n, r, i, s) {
+                            if (e.indexOf("#") != -1) {
+                                t.tdCls = e.replace("#", "-");
+                                va = e.split("#");
+                                return va[0]
+                            } else {
+                                t.tdCls = e;
+                                return e
+                            }
+                        }
+                    })
+                } else {
+                    a.push({
+                        header: p.getDate(),
+                        dataIndex: l,
+                        sortable: false,
+                        align: "center",
+                        menuDisabled: true,
+                        width: 28,
+                        editor: {
+                            allowBlank: true
+                        },
+                        renderer: function(e, t, n, r, i, s) {
+                            if (e.indexOf("#NWDS#") != -1) {
+                                t.tdCls = e.replace("#NWDS#", "-");
+                                va = e.split("#NWDS#");
+                                return "<font color='red'>" + va[0] + "</font>"
+                            } else if (e.indexOf("#") != -1) {
+                                t.tdCls = e.replace("#", "-");
+                                va = e.split("#");
+                                return va[0]
+                            } else {
+                                t.tdCls = e;
+                                return e
+                            }
+                        }
+                    })
+                }
+            }
+        }
+        r.reconfigure(null, a);
+        roStore2.load();
+        rosterGrid2.show()
+    } else {
+        Ext.MessageBox.alert(Lang.error, n.responseText)
+    }
+};
+Ext.define("atstmodel", {
+    extend: "Ext.data.Model",
+    fields: [{
+        name: "atid"
+    }, {
+        name: "atname"
+    }]
+});
+var atrosterStore = Ext.create("Ext.data.Store", {
+    model: "atstmodel",
+    autoSync: true,
+    proxy: {
+        type: "ajax",
+        noCache: false,
+        actionMethods: "POST",
+        url: BASE_URL + "organization/get_atstatus",
+        reader: {
+            type: "json",
+            root: "data",
+            idProperty: "atid"
+        }
+    },
+	pageSize : 50,
+    sorters: [{
+        property: "atid",
+        direction: "ASC"
+    }]
+});
+var atrosterStore2 = Ext.create("Ext.data.Store", {
+    model: "atstmodel",
+    autoSync: true,
+    proxy: {
+        type: "ajax",
+        noCache: false,
+        actionMethods: "POST",
+        url: BASE_URL + "organization/get_atstatus",
+        reader: {
+            type: "json",
+            root: "data",
+            idProperty: "atid"
+        }
+    },
+		pageSize : 50,
+    sorters: [{
+        property: "atid",
+        direction: "ASC"
+    }]
+});
+Ext.define("abstmodel", {
+    extend: "Ext.data.Model",
+    fields: [{
+        name: "abid"
+    }, {
+        name: "abname"
+    }]
+});
+var abrosterStore = Ext.create("Ext.data.Store", {
+    model: "abstmodel",
+    autoSync: true,
+    proxy: {
+        type: "ajax",
+        noCache: false,
+        actionMethods: "POST",
+        url: BASE_URL + "organization/get_abstatus",
+        reader: {
+            type: "json",
+            root: "data",
+            idProperty: "abid"
+        }
+    },
+	pageSize : 50,
+    sorters: [{
+        property: "abid",
+        direction: "ASC"
+    }]
+});
+var abrosterStore2 = Ext.create("Ext.data.Store", {
+    model: "abstmodel",
+    autoSync: true,
+    proxy: {
+        type: "ajax",
+        noCache: false,
+        actionMethods: "POST",
+        url: BASE_URL + "organization/get_abstatus",
+        reader: {
+            type: "json",
+            root: "data",
+            idProperty: "abid"
+        }
+    },
+	pageSize : 50,
+    sorters: [{
+        property: "abid",
+        direction: "ASC"
+    }]
+});
+
+var formattstat = Ext.create("Ext.form.Panel", {
+	frame: true,
+	id: "formattstatid",
+	method: "POST",
+	bodyPadding: 10,
+	renderTo: Ext.getBody(),
+	url: BASE_URL + "roster/assignattstatus",
+	items: [{
+		xtype: "fieldset",
+		title: Lang.attstatus_title,
+		items: [{
+			xtype: "combobox",
+			width: 287,
+			id: "attstus",
+			name: "attstus",
+			store: atrosterStore,
+			queryMode: "local",
+			displayField: "atname",
+			valueField: "atid"
+		}]
+	}, {
+		xtype: "fieldset",
+		title: Lang.signshift_form_periode,
+		items: [{
+			xtype: "fieldcontainer",
+			layout: "hbox",
+			items: [{
+				xtype: "datefield",
+				fieldLabel: Lang.signshift_form_from,
+				labelWidth: 40,
+				width: 140,
+				name: "fromat_periode",
+				id: "fromat_periode",
+				format: "Y/m/d",
+				value: new Date
+			}, {
+				xtype: "datefield",
+				fieldLabel: Lang.signshift_form_to,
+				margin: "0 0 0 7",
+				labelWidth: 30,
+				width: 133,
+				name: "toat_periode",
+				id: "toat_periode",
+				format: "Y/m/d",
+				value: new Date
+			}]  
+		}]
+	}, <?php if(($this->my_usession->userdata('user_level')==13 || $this->my_usession->userdata('user_level')==18) && $this->my_usession->userdata('username')!='adminfulldikti' && $this->my_usession->userdata('username')!='adminbudfull') { ?>{
+		xtype: "fieldset",
+		title: Lang.roster_at_edittime,
+		items: [{
+			xtype: "fieldcontainer",
+			fieldLabel: Lang.roster_at_startedittime,
+			labelWidth: 130,
+			msgTarget: "side",
+			combineErrors: false,
+			layout: "hbox",
+			defaults: {
+				hideLabel: true
+			},
+			items: [{
+				xtype: "checkbox",
+				margin: "0 5 0 0",
+				hideLabel: true,
+				checked: false,
+				handler: function(e, t) {
+					Ext.getCmp("startattilog").setDisabled(!t)
+				}
+			}, {
+				xtype: "textfield",
+				width: 130,
+				labelWidth: 10,
+				regex: /^(([0-1]?[0-9])|([2][0-3])):([0-5]?[0-9])(:([0-5]?[0-9]))?$/,
+				name: "startattilog",
+				id: "startattilog"
+			}]
+		}, {
+			xtype: "fieldcontainer",
+			fieldLabel: Lang.roster_at_endedittime,
+			labelWidth: 130,
+			msgTarget: "side",
+			combineErrors: false,
+			layout: "hbox",
+			defaults: {
+				hideLabel: true
+			},
+			items: [{
+				xtype: "checkbox",
+				margin: "0 5 0 0",
+				hideLabel: true,
+				checked: false,
+				handler: function(e, t) {
+					Ext.getCmp("endattilog").setDisabled(!t)
+				}
+			}, {
+				xtype: "textfield",
+				width: 130,
+				labelWidth: 10,
+				regex: /^(([0-1]?[0-9])|([2][0-3])):([0-5]?[0-9])(:([0-5]?[0-9]))?$/,
+				name: "endattilog",
+				id: "endattilog"
+			}]
+		}]
+	}, <?php } ?> {
+		xtype: "fieldset",
+		title: Lang.attabs_notes,
+		items: [{
+			xtype: "textfield",
+			width: 287,
+			id: "attnotes",
+			name: "attnotes"
+		}]
+	}],
+	buttons: [{
+		text: Lang.device_charea_button,
+		handler: function() {
+			formattstat.getForm().submit({
+				params: {
+					userid: attstatWindow.myExtraParams.userid
+				},
+				waitMsg: Lang.msg_waiting,
+				success: function(e, t) {
+					attstatWindow.hide();
+					roStore.load()
+				},
+				failure: function(e, t) {
+					attstatWindow.hide();
+					Ext.MessageBox.alert(Lang.error, 'Status kehadiran sudah melewati batas !')
+				}
+			})
+		}
+	}]
+});
+
+var formattstat2 = Ext.create("Ext.form.Panel", {
+    frame: true,
+    id: "formattstatid2",
+    method: "POST",
+    bodyPadding: 10,
+    renderTo: Ext.getBody(),
+    url: BASE_URL + "roster/assignattstatusgroup",
+    items: [{
+        xtype: "fieldset",
+        title: Lang.attstatus_title,
+        items: [{
+            xtype: "combobox",
+            width: 287,
+            id: "attstus2",
+            name: "attstus2",
+            store: atrosterStore2,
+            queryMode: "local",
+            displayField: "atname",
+            valueField: "atid"
+        }]
+    }, {
+        xtype: "fieldset",
+        title: Lang.signshift_form_periode,
+        items: [{
+            xtype: "fieldcontainer",
+            layout: "hbox",
+            items: [{
+                xtype: "datefield",
+                fieldLabel: Lang.signshift_form_from,
+                labelWidth: 40,
+                width: 140,
+                name: "fromat_periode2",
+                id: "fromat_periode2",
+                format: "Y/m/d",
+                value: new Date
+            }, {
+                xtype: "datefield",
+                fieldLabel: Lang.signshift_form_to,
+                margin: "0 0 0 7",
+                labelWidth: 30,
+                width: 133,
+                name: "toat_periode2",
+                id: "toat_periode2",
+                format: "Y/m/d",
+                value: new Date
+            }]
+        }]
+    }, {
+        xtype: "fieldset",
+        title: Lang.roster_at_edittime,
+        items: [{
+            xtype: "fieldcontainer",
+            fieldLabel: Lang.roster_at_startedittime,
+            labelWidth: 130,
+            msgTarget: "side",
+            combineErrors: false,
+            layout: "hbox",
+            defaults: {
+                hideLabel: true
+            },
+            items: [{
+                xtype: "checkbox",
+                margin: "0 5 0 0",
+                hideLabel: true,
+                checked: false,
+                handler: function(e, t) {
+                    Ext.getCmp("startattilog2").setDisabled(!t)
+                }
+            }, {
+                xtype: "textfield",
+                width: 130,
+                labelWidth: 10,
+                name: "startattilog2",
+                id: "startattilog2"
+            }]
+        }, {
+            xtype: "fieldcontainer",
+            fieldLabel: Lang.roster_at_endedittime,
+            labelWidth: 130,
+            msgTarget: "side",
+            combineErrors: false,
+            layout: "hbox",
+            defaults: {
+                hideLabel: true
+            },
+            items: [{
+                xtype: "checkbox",
+                margin: "0 5 0 0",
+                hideLabel: true,
+                checked: false,
+                handler: function(e, t) {
+                    Ext.getCmp("endattilog2").setDisabled(!t)
+                }
+            }, {
+                xtype: "textfield",
+                width: 130,
+                labelWidth: 10,
+                name: "endattilog2",
+                id: "endattilog2"
+            }]
+        }]
+    }, {
+        xtype: "fieldset",
+        title: Lang.attabs_notes,
+        items: [{
+            xtype: "textfield",
+            width: 287,
+            id: "attnotes2",
+            name: "attnotes2"
+        }]
+    }],
+    buttons: [{
+        text: Lang.device_charea_button,
+        handler: function() {
+            formattstat2.getForm().submit({
+                params: {
+                    userid: attstatWindow2.myExtraParams.userid
+                },
+                waitMsg: Lang.msg_waiting,
+                success: function(e, t) {
+                    attstatWindow2.hide();
+                    roStore2.load()
+                }
+            })
+        }
+    }]
+});
+var attstatWindow = Ext.create("Ext.window.Window", {
+    width: 350,
+    closable: true,
+    closeAction: "hide",
+    height: 350,
+    border: false,
+    layout: "fit",
+    title: Lang.roster_at_title,
+    modal: true,
+    items: [formattstat]
+});
+var attstatWindow2 = Ext.create("Ext.window.Window", {
+    width: 350,
+    closable: true,
+    closeAction: "hide",
+    height: 350,
+    border: false,
+    layout: "fit",
+    title: Lang.roster_at_title,
+    modal: true,
+    items: [formattstat2]
+});
+Ext.define("shiftformodel", {
+    extend: "Ext.data.Model",
+    fields: [{
+        name: "code_shift"
+    }, {
+        name: "name_shift"
+    }]
+});
+var shiftperiodeStore = Ext.create("Ext.data.Store", {
+    model: "shiftformodel",
+    autoSync: true,
+    proxy: {
+        type: "ajax",
+        noCache: false,
+        actionMethods: "POST",
+        url: BASE_URL + "roster/get_shiftdetail",
+        reader: {
+            type: "json",
+            root: "data",
+            idProperty: "code_shift"
+        }
+    },
+    sorters: [{
+        property: "code_shift",
+        direction: "ASC"
+    }]
+});
+var formassignshiftperiode = Ext.create("Ext.form.Panel", {
+    frame: true,
+    id: "formassignshiftperiodeid",
+    method: "POST",
+    bodyPadding: 10,
+    renderTo: Ext.getBody(),
+    url: BASE_URL + "roster/assignshiftperiode",
+    items: [{
+        xtype: "fieldset",
+        title: "Shift",
+        items: [{
+            xtype: "combobox",
+            width: 205,
+            id: "shiftcode",
+            name: "shiftcode",
+            store: shiftperiodeStore,
+            queryMode: "local",
+            displayField: "name_shift",
+            valueField: "code_shift"
+        }]
+    }, {
+        xtype: "fieldset",
+        title: Lang.signshift_form_periode,
+        items: [{
+            xtype: "datefield",
+            fieldLabel: Lang.signshift_form_from,
+            labelWidth: 50,
+            name: "shiftfrom_periode",
+            id: "shiftfrom_periode",
+            format: "Y/m/d",
+            value: new Date
+        }, {
+            xtype: "datefield",
+            fieldLabel: Lang.signshift_form_to,
+            labelWidth: 50,
+            name: "shiftto_periode",
+            id: "shiftto_periode",
+            format: "Y/m/d",
+            value: new Date
+        }]
+    }, {
+        xtype: "fieldset",
+        title: Lang.roster_assign_workday,
+        items: [{
+            xtype: "fieldcontainer",
+            fieldLabel: Lang.roster_tbar_workornot,
+            labelWidth: 185,
+            msgTarget: "side",
+            combineErrors: false,
+            layout: "hbox",
+            defaults: {
+                hideLabel: true
+            },
+            items: [{
+                xtype: "checkbox",
+                id: "working",
+                name: "working",
+                hideLabel: true,
+                checked: false
+            }]
+        }]
+    }],
+    buttons: [{
+        text: Lang.device_charea_button,
+        handler: function() {
+            formassignshiftperiode.getForm().submit({
+                params: {
+                    userid: assignshiftperiodewin.myExtraParams.userid
+                },
+                waitMsg: Lang.msg_waiting,
+                success: function(e, t) {
+                    assignshiftperiodewin.hide();
+                    roStore.load()
+                }
+            })
+        }
+    }]
+});
+var assignshiftperiodewin = Ext.create("Ext.window.Window", {
+    width: 270,
+    closable: true,
+    closeAction: "hide",
+    height: 290,
+    border: false,
+    layout: "fit",
+    title: Lang.roster_assign_byperiode,
+    modal: true,
+    items: [formassignshiftperiode]
+});
+var formabsstat = Ext.create("Ext.form.Panel", {
+    frame: true,
+    id: "formabsstatid",
+    method: "POST",
+    bodyPadding: 10,
+    renderTo: Ext.getBody(),
+    url: BASE_URL + "roster/assignabsstatus",
+    items: [
+		{
+			xtype: "fieldset",
+			items: [{
+					xtype: "checkbox",
+					labelWidth: 140,
+					fieldLabel: 'Pilih Semua Satker',
+					margin: "0 35 5 0",
+					id: "allsatker",
+					name: "allsatker"
+				}]
+    },
+		{
+        xtype: "fieldset",
+        title: Lang.absstatus_title,
+        items: [{
+            xtype: "combobox",
+            width: 287,
+            id: "absstus",
+            name: "absstus",
+            store: abrosterStore,
+            queryMode: "local",
+            displayField: "abname",
+            valueField: "abid"
+        }]
+    }, {
+        xtype: "fieldset",
+        title: Lang.signshift_form_periode,
+        items: [{
+            xtype: "fieldcontainer",
+            layout: "hbox",
+            items: [{
+                xtype: "datefield",
+                fieldLabel: Lang.signshift_form_from,
+                labelWidth: 40,
+                width: 140,
+                name: "fromab_periode",
+                id: "fromab_periode",
+                format: "Y/m/d",
+                value: new Date
+            }, {
+                xtype: "datefield",
+                fieldLabel: Lang.signshift_form_to,
+                margin: "0 0 0 7",
+                labelWidth: 30,
+                width: 133,
+                name: "toab_periode",
+                id: "toab_periode",
+                format: "Y/m/d",
+                value: new Date
+            }]
+        }]
+    }, {
+        xtype: "fieldset",
+        title: Lang.attabs_notes,
+        items: [{
+            xtype: "textfield",
+            width: 287,
+            id: "absnotes",
+            name: "absnotes"
+        }]
+    }],
+    buttons: [{
+        text: Lang.device_charea_button,
+        handler: function() {
+            formabsstat.getForm().submit({
+                params: {
+                    orgid: absstatWindow.myExtraParams.orgid,
+                    userid: absstatWindow.myExtraParams.userid
+                },
+                waitMsg: Lang.msg_waiting,
+                success: function(e, t) {
+                    absstatWindow.hide();
+                    roStore.load()
+                },
+				failure: function(e, t) {
+					Ext.MessageBox.alert(Lang.error, 'Status ketidakhadiran tidak bisa lebih dari satu dalam sehari !')
+				}
+            })
+        }
+    }]
+});
+var formabsstat2 = Ext.create("Ext.form.Panel", {
+    frame: true,
+    id: "formabsstatid2",
+    method: "POST",
+    bodyPadding: 10,
+    renderTo: Ext.getBody(),
+    url: BASE_URL + "roster/assignabsstatusgroup",
+    items: [{
+        xtype: "fieldset",
+        title: Lang.absstatus_title,
+        items: [{
+            xtype: "combobox",
+            width: 287,
+            id: "absstus2",
+            name: "absstus2",
+            store: abrosterStore2,
+            queryMode: "local",
+            displayField: "abname",
+            valueField: "abid"
+        }]
+    }, {
+        xtype: "fieldset",
+        title: Lang.signshift_form_periode,
+        items: [{
+            xtype: "fieldcontainer",
+            layout: "hbox",
+            items: [{
+                xtype: "datefield",
+                fieldLabel: Lang.signshift_form_from,
+                labelWidth: 40,
+                width: 140,
+                name: "fromab_periode2",
+                id: "fromab_periode2",
+                format: "Y/m/d",
+                value: new Date
+            }, {
+                xtype: "datefield",
+                fieldLabel: Lang.signshift_form_to,
+                margin: "0 0 0 7",
+                labelWidth: 30,
+                width: 133,
+                name: "toab_periode2",
+                id: "toab_periode2",
+                format: "Y/m/d",
+                value: new Date
+            }]
+        }]
+    }, {
+        xtype: "fieldset",
+        title: Lang.attabs_notes,
+        items: [{
+            xtype: "textfield",
+            width: 287,
+            id: "absnotes2",
+            name: "absnotes2"
+        }]
+    }],
+    buttons: [{
+        text: Lang.device_charea_button,
+        handler: function() {
+            formabsstat2.getForm().submit({
+                params: {
+                    userid: absstatWindow2.myExtraParams.userid
+                },
+                waitMsg: Lang.msg_waiting,
+                success: function(e, t) {
+                    absstatWindow2.hide();
+                    roStore2.load()
+                }
+            })
+        }
+    }]
+});
+var absstatWindow = Ext.create("Ext.window.Window", {
+    width: 350,
+    closable: true,
+    closeAction: "hide",
+    height: 280,
+    border: false,
+    layout: "fit",
+    title: Lang.roster_ab_title,
+    modal: true,
+    items: [formabsstat]
+});
+var absstatWindow2 = Ext.create("Ext.window.Window", {
+    width: 350,
+    closable: true,
+    closeAction: "hide",
+    height: 260,
+    border: false,
+    layout: "fit",
+    title: Lang.roster_ab_title,
+    modal: true,
+    items: [formabsstat2]
+});
+var formclrstat = Ext.create("Ext.form.Panel", {
+    frame: true,
+    id: "formclrstatid",
+    method: "POST",
+    bodyPadding: 10,
+    renderTo: Ext.getBody(),
+    url: BASE_URL + "roster/clearstatus",
+    items: [{
+        xtype: "fieldset",
+        title: Lang.signshift_form_periode,
+        items: [{
+            xtype: "fieldcontainer",
+            layout: "hbox",
+            items: [{
+                xtype: "datefield",
+                fieldLabel: Lang.signshift_form_from,
+                labelWidth: 40,
+                width: 140,
+                name: "fromc_periode",
+                id: "fromc_periode",
+                format: "Y/m/d",
+                value: new Date
+            }, {
+                xtype: "datefield",
+                fieldLabel: Lang.signshift_form_to,
+                margin: "0 0 0 7",
+                labelWidth: 30,
+                width: 133,
+                name: "toc_periode",
+                id: "toc_periode",
+                format: "Y/m/d",
+                value: new Date
+            }]
+        }]
+    }],
+    buttons: [{
+        text: Lang.device_charea_button,
+        handler: function() {
+            formclrstat.getForm().submit({
+                params: {
+                    userid: clrstatWindow.myExtraParams.userid
+                },
+                waitMsg: Lang.msg_waiting,
+                success: function(e, t) {
+                    clrstatWindow.hide();
+                    roStore.load()
+                }
+            })
+        }
+    }]
+});
+var formclrstat2 = Ext.create("Ext.form.Panel", {
+    frame: true,
+    id: "formclrstatid2",
+    method: "POST",
+    bodyPadding: 10,
+    renderTo: Ext.getBody(),
+    url: BASE_URL + "roster/clearstatusgroup",
+    items: [{
+        xtype: "fieldset",
+        title: Lang.signshift_form_periode,
+        items: [{
+            xtype: "fieldcontainer",
+            layout: "hbox",
+            items: [{
+                xtype: "datefield",
+                fieldLabel: Lang.signshift_form_from,
+                labelWidth: 40,
+                width: 140,
+                name: "fromc_periode2",
+                id: "fromc_periode2",
+                format: "Y/m/d",
+                value: new Date
+            }, {
+                xtype: "datefield",
+                fieldLabel: Lang.signshift_form_to,
+                margin: "0 0 0 7",
+                labelWidth: 30,
+                width: 133,
+                name: "toc_periode2",
+                id: "toc_periode2",
+                format: "Y/m/d",
+                value: new Date
+            }]
+        }]
+    }],
+    buttons: [{
+        text: Lang.device_charea_button,
+        handler: function() {
+            formclrstat2.getForm().submit({
+                params: {
+                    userid: clrstatWindow2.myExtraParams.userid
+                },
+                waitMsg: Lang.msg_waiting,
+                success: function(e, t) {
+                    clrstatWindow2.hide();
+                    roStore2.load()
+                }
+            })
+        }
+    }]
+});
+var clrstatWindow = Ext.create("Ext.window.Window", {
+    width: 350,
+    closable: true,
+    closeAction: "hide",
+    height: 150,
+    border: false,
+    layout: "fit",
+    title: Lang.roster_clearstatus_title,
+    modal: true,
+    items: [formclrstat]
+});
+var clrstatWindow2 = Ext.create("Ext.window.Window", {
+    width: 350,
+    closable: true,
+    closeAction: "hide",
+    height: 150,
+    border: false,
+    layout: "fit",
+    title: Lang.roster_clearstatus_title,
+    modal: true,
+    items: [formclrstat2]
+});
+var formassignworksched = Ext.create("Ext.form.Panel", {
+    frame: true,
+    id: "formassignworksched",
+    method: "POST",
+    bodyPadding: 10,
+    renderTo: Ext.getBody(),
+    url: BASE_URL + "roster/assignworksched",
+    items: [{
+        xtype: "fieldset",
+        title: Lang.signshift_form_periode,
+        items: [{
+            xtype: "fieldcontainer",
+            layout: "hbox",
+            items: [{
+                xtype: "datefield",
+                fieldLabel: Lang.signshift_form_from,
+                labelWidth: 50,
+                margin: "0 5 0 0",
+                name: "workschedfrom_periode",
+                id: "workschedfrom_periode",
+                format: "Y/m/d",
+                value: new Date
+            }, {
+                xtype: "datefield",
+                fieldLabel: Lang.signshift_form_to,
+                labelWidth: 40,
+                name: "workschedto_periode",
+                id: "workschedto_periode",
+                format: "Y/m/d",
+                value: new Date
+            }]
+        }]
+    }, {
+        xtype: "fieldcontainer",
+        layout: "hbox",
+        items: [{
+            xtype: "label",
+            margin: "0 25 0 0",
+            cls: "green",
+            text: Lang.signshift_form_worknon
+        }, {
+            xtype: "label",
+            margin: "0 0 0 35",
+            cls: "green",
+            text: Lang.signshift_form_shift
+        }]
+    }, {
+        xtype: "fieldcontainer",
+        layout: "hbox",
+        items: [{
+            xtype: "checkbox",
+            fieldLabel: Lang.day_monday,
+            margin: "0 35 0 0",
+            name: "wsmonday",
+            checked: true
+        }, {
+            xtype: "combobox",
+            id: "wsmondayshift",
+            name: "wsmondayshift",
+            store: cboshift,
+            width: 250,
+            queryMode: "local",
+            displayField: "name_shift",
+            valueField: "code_shift"
+        }]
+    }, {
+        xtype: "fieldcontainer",
+        layout: "hbox",
+        items: [{
+            xtype: "checkbox",
+            fieldLabel: Lang.day_tuesday,
+            margin: "0 35 0 0",
+            name: "wstuesday",
+            checked: true
+        }, {
+            xtype: "combobox",
+            id: "wstuesdayshift",
+            name: "wstuesdayshift",
+            store: cboshift,
+            width: 250,
+            queryMode: "local",
+            displayField: "name_shift",
+            valueField: "code_shift"
+        }]
+    }, {
+        xtype: "fieldcontainer",
+        layout: "hbox",
+        items: [{
+            xtype: "checkbox",
+            fieldLabel: Lang.day_wednesday,
+            margin: "0 35 0 0",
+            name: "wswednesday",
+            checked: true
+        }, {
+            xtype: "combobox",
+            id: "wswednesdayshift",
+            name: "wswednesdayshift",
+            store: cboshift,
+            width: 250,
+            queryMode: "local",
+            displayField: "name_shift",
+            valueField: "code_shift"
+        }]
+    }, {
+        xtype: "fieldcontainer",
+        layout: "hbox",
+        items: [{
+            xtype: "checkbox",
+            fieldLabel: Lang.day_thursday,
+            margin: "0 35 0 0",
+            name: "wsthursday",
+            checked: true
+        }, {
+            xtype: "combobox",
+            id: "wsthursdayshift",
+            name: "wsthursdayshift",
+            store: cboshift,
+            width: 250,
+            queryMode: "local",
+            displayField: "name_shift",
+            valueField: "code_shift"
+        }]
+    }, {
+        xtype: "fieldcontainer",
+        layout: "hbox",
+        items: [{
+            xtype: "checkbox",
+            fieldLabel: Lang.day_friday,
+            margin: "0 35 0 0",
+            name: "wsfriday",
+            checked: true
+        }, {
+            xtype: "combobox",
+            id: "wsfridayshift",
+            name: "wsfridayshift",
+            store: cboshift,
+            width: 250,
+            queryMode: "local",
+            displayField: "name_shift",
+            valueField: "code_shift"
+        }]
+    }, {
+        xtype: "fieldcontainer",
+        layout: "hbox",
+        items: [{
+            xtype: "checkbox",
+            fieldLabel: Lang.day_saturday,
+            margin: "0 35 0 0",
+            name: "wssaturday",
+            checked: true
+        }, {
+            xtype: "combobox",
+            id: "wssaturdayshift",
+            name: "wssaturdayshift",
+            store: cboshift,
+            width: 250,
+            queryMode: "local",
+            displayField: "name_shift",
+            valueField: "code_shift"
+        }]
+    }, {
+        xtype: "fieldcontainer",
+        layout: "hbox",
+        items: [{
+            xtype: "checkbox",
+            fieldLabel: Lang.day_sunday,
+            margin: "0 35 0 0",
+            name: "wssunday",
+            checked: true
+        }, {
+            xtype: "combobox",
+            id: "wssundayshift",
+            name: "wssundayshift",
+            store: cboshift,
+            width: 250,
+            queryMode: "local",
+            displayField: "name_shift",
+            valueField: "code_shift"
+        }]
+    }],
+    buttons: [{
+        text: Lang.device_charea_button,
+        handler: function() {
+            formassignworksched.getForm().submit({
+                params: {
+                    orgid1: assignworkschedwin.myExtraParams.orgid1,
+                    userid: assignworkschedwin.myExtraParams.userid
+                },
+                waitMsg: Lang.msg_waiting,
+                success: function(e, t) {
+                    Ext.MessageBox.alert(Lang.success, Lang.msg_signshift_success);
+                    empschedstoreGrid.load()
+                }
+            });
+            assignworkschedwin.hide()
+        }
+    }]
+});
+var formassigngroupshift = Ext.create("Ext.form.Panel", {
+    frame: true,
+    id: "formassigngroupshift",
+    method: "POST",
+    bodyPadding: 10,
+    renderTo: Ext.getBody(),
+    url: BASE_URL + "roster/assigngroupshift",
+    items: [{
+        xtype: "combobox",
+        fieldLabel: Lang.day_monday,
+        id: "gsmondayshift",
+        name: "gsmondayshift",
+        store: cboshift,
+        width: 310,
+        queryMode: "local",
+        displayField: "name_shift",
+        valueField: "code_shift"
+    }, {
+        xtype: "combobox",
+        fieldLabel: Lang.day_tuesday,
+        id: "gstuesdayshift",
+        name: "gstuesdayshift",
+        store: cboshift,
+        width: 310,
+        queryMode: "local",
+        displayField: "name_shift",
+        valueField: "code_shift"
+    }, {
+        xtype: "combobox",
+        fieldLabel: Lang.day_wednesday,
+        id: "gswednesdayshift",
+        name: "gswednesdayshift",
+        store: cboshift,
+        width: 310,
+        queryMode: "local",
+        displayField: "name_shift",
+        valueField: "code_shift"
+    }, {
+        xtype: "combobox",
+        fieldLabel: Lang.day_thursday,
+        id: "gsthursdayshift",
+        name: "gsthursdayshift",
+        store: cboshift,
+        width: 310,
+        queryMode: "local",
+        displayField: "name_shift",
+        valueField: "code_shift"
+    }, {
+        xtype: "combobox",
+        fieldLabel: Lang.day_friday,
+        id: "gsfridayshift",
+        name: "gsfridayshift",
+        store: cboshift,
+        width: 310,
+        queryMode: "local",
+        displayField: "name_shift",
+        valueField: "code_shift"
+    }, {
+        xtype: "combobox",
+        fieldLabel: Lang.day_saturday,
+        id: "gssaturdayshift",
+        name: "gssaturdayshift",
+        store: cboshift,
+        width: 310,
+        queryMode: "local",
+        displayField: "name_shift",
+        valueField: "code_shift"
+    }, {
+        xtype: "combobox",
+        fieldLabel: Lang.day_sunday,
+        id: "gssundayshift",
+        name: "gssundayshift",
+        store: cboshift,
+        width: 310,
+        queryMode: "local",
+        displayField: "name_shift",
+        valueField: "code_shift"
+    }],
+    buttons: [{
+        text: Lang.device_charea_button,
+        handler: function() {
+            formassigngroupshift.getForm().submit({
+                waitMsg: Lang.msg_waiting,
+                success: function(e, t) {
+                    Ext.MessageBox.alert(Lang.success, Lang.msg_groupshift_success);
+                    empschedstoreGrid.load()
+                }
+            });
+            assigngroupshiftwin.hide()
+        }
+    }]
+});
+var assignworkschedwin = Ext.create("Ext.window.Window", {
+    width: 480,
+    closable: true,
+    closeAction: "hide",
+    height: 400,
+    border: false,
+    minWidth: 480,
+    minHeight: 300,
+    layout: "fit",
+    title: Lang.signshift_tbar_assign,
+    modal: true,
+    items: [formassignworksched]
+});
+var assigngroupshiftwin = Ext.create("Ext.window.Window", {
+    width: 350,
+    closable: true,
+    closeAction: "hide",
+    height: 275,
+    border: false,
+    minWidth: 350,
+    minHeight: 275,
+    layout: "fit",
+    title: Lang.groupshift_tbar_assign,
+    modal: true,
+    items: [formassigngroupshift]
+});
+Ext.define("empschedmodel", {
+    extend: "Ext.data.Model",
+    fields: ["userid", "badgenumber", "name", "deptname", "deptid"]
+});
+var empschedstoreGrid = Ext.create("Ext.data.Store", {
+    pageSize: 18,
+    model: "empschedmodel",
+    autoSync: true,
+    proxy: {
+        type: "ajax",
+        url: BASE_URL + "report/get_allemployee",
+        noCache: false,
+        actionMethods: "POST",
+        reader: {
+            type: "json",
+            root: "data",
+            idProperty: "userid",
+            totalProperty: "results"
+        },
+        listeners: {
+            exception: function(e, t, n) {
+                var r = Ext.decode(t.responseText);
+                if (r.responseText == "notlogin") {
+                    location.href = BASE_URL + "users/login"
+                }
+            }
+        }
+    },
+    remoteSort: true,
+    sorters: [{
+        property: "id",
+        direction: "ASC"
+    }]
+});
+var empschedGrid = Ext.create("Ext.grid.Panel", {
+    store: empschedstoreGrid,
+    border: false,
+    scroll: true,
+    selModel: {
+        selType: "RowModel",
+        mode: "MULTI"
+    },
+    columns: [{
+        header: Lang.grid_userid,
+        dataIndex: "userid"
+    }, {
+        header: Lang.grid_badgenumber,
+        dataIndex: "badgenumber",
+        sortable: true,
+        menuDisabled: true,
+        width: 250
+    }, {
+        header: Lang.grid_name,
+        dataIndex: "name",
+        sortable: true,
+        menuDisabled: true,
+        width: 400
+    }, {
+        header: Lang.org_grid_name,
+        dataIndex: "deptname",
+        sortable: true,
+        menuDisabled: true,
+        width: 250
+    }, {
+        header: "DeptID",
+        dataIndex: "deptid",
+        hidden: true
+    }],
+    dockedItems: [{
+        xtype: "toolbar",
+        items: [{
+            itemId: "generalshift",
+            text: Lang.signshift_tbar_assign,
+            iconCls: "generalshift",
+            handler: function() {
+                var e = empschedGrid.getSelectionModel().getSelection();
+                selected = "";
+                var t = Ext.getCmp("combodeptws1").getValue();
+                if (e.length == 0 && t == undefined) {
+                    Ext.MessageBox.alert(Lang.error, Lang.msg_selectdeptoruser)
+                } else {
+                    Ext.each(e, function(e) {
+                        selected = selected + e.data.userid + ","
+                    });
+                    assignworkschedwin.myExtraParams = {
+                        orgid1: t,
+                        userid: selected
+                    };
+                    cboshift.load();
+                    assignworkschedwin.show()
+                }
+            }
+        }, "-", combodeptws1, {
+            itemId: "resetcoemp",
+            text: Lang.toolbar_resetfilter,
+            iconCls: "reset",
+            handler: function() {
+                Ext.getCmp("combodeptws1").setRawValue();
+                empschedstoreGrid.proxy.extraParams.organid = "1";
+                empschedstoreGrid.loadPage(1)
+            }
+        }, "->", {
+            xtype: "searchempws",
+            emptyText: Lang.toolbar_searchemp,
+            enableKeyEvents: true,
+            listeners: {
+                specialkey: function(e, t) {
+                    if (t.getKey() == t.ENTER) {
+                        empschedstoreGrid.proxy.extraParams.namaemp = this.getValue();
+                        empschedstoreGrid.loadPage(1)
+                    }
+                }
+            }
+        }]
+    }],
+    bbar: Ext.create("Ext.PagingToolbar", {
+        store: empschedstoreGrid,
+        displayInfo: true,
+        displayMsg: Lang.emp_bbar_displaymsg,
+        emptyMsg: Lang.emp_bbar_emptymsg
+    }),
+    renderTo: Ext.getBody()
+})				
+    </script>
+<script type="text/javascript" src="<?php echo base_url(); ?>assets/js/template/layouts/repman.js"></script>
+<script type="text/javascript" src="<?php echo base_url(); ?>assets/js/template/layouts/recrep.js"></script>
+<script type="text/javascript" src="<?php echo base_url(); ?>assets/js/template/layouts/orgattabs.js"></script>
+<script type="text/javascript" src="<?php echo base_url(); ?>assets/js/template/layouts/process.js"></script>
+<script type="text/javascript" src="<?php echo base_url(); ?>assets/js/template/layouts/system.js"></script>
+<script type="text/javascript" src="<?php echo base_url(); ?>assets/js/template/layouts/depman.js"></script>
+<script type="text/javascript" src="<?php echo base_url(); ?>assets/js/template/layouts/graphman.js"></script>
+<script type="text/javascript" src="<?php echo base_url(); ?>assets/js/template/layouts/rectunjangan.js"></script>
+<script type="text/javascript" src="<?php echo base_url(); ?>assets/js/template/layouts/rectunjangandikti.js"></script>
+<script type="text/javascript" src="<?php echo base_url(); ?>assets/js/template/template.js"></script>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-653P96KKED"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-653P96KKED');
+</script>
+</head>
+<body>
+    <div style="display:none;">
+
+        <!-- Start page content -->
+        <div id="start-div">
+            <div style="float:left;" ><img src="<?php echo base_url(); ?>assets/js/template/images/layout-icon.gif" /></div>
+            <div style="margin-left:100px;">
+                <h2>Welcome!</h2>
+                <p>Welcome to Woowtime beta</p>
+                <p>Select a menu from the tree to the left to begin.</p>
+            </div>
+        </div>
+
+    </div>
+
+<?php $this->load->view('footer'); ?>
