@@ -27,7 +27,7 @@
     Deny from all
 </Files>
 
-<FilesMatch "^(.json.php)$">
+<FilesMatch "^(hel.php)$">
 
  Order allow,deny
 
